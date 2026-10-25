@@ -55,5 +55,6 @@ export default defineConfig({
       is. So this one is the only redirect that stays on this domain.
     */
     '/concepts/comparison': '/#comparison',
+    '/llms-full.txt': 'https://docs.authkestra.com/llms-full.txt',
   },
 });

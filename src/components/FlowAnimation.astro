@@ -3,45 +3,60 @@ import Icon from './Icon.astro';
 import { highlightRust } from '../lib/rust-highlight';
 
 const stages = [
-  { id: 'agent-call', label: 'AI Agent Call', sub: 'MCP JSON-RPC', icon: 'bot', cx: 110 },
-  { id: 'policy-jcs', label: 'Policy & JCS Binding', sub: 'RFC 8785 SHA-256', icon: 'shield-check', cx: 330 },
-  { id: 'passkey-pulse', label: 'Passkey Biometric Pulse', sub: 'WebAuthn Step-Up', icon: 'fingerprint', cx: 550 },
-  { id: 'vault-token', label: 'Scoped Vault Token', sub: 'Zero-Trust Proof', icon: 'lock', cx: 770 },
+  { id: 'agent-call', num: '01', label: 'AI Agent Call', sub: 'MCP JSON-RPC', icon: 'bot', cx: 115 },
+  { id: 'policy-jcs', num: '02', label: 'Policy & JCS Hash', sub: 'RFC 8785 SHA-256', icon: 'shield-check', cx: 335 },
+  { id: 'passkey-pulse', num: '03', label: 'Passkey Step-Up', sub: 'WebAuthn Proof', icon: 'fingerprint', cx: 555 },
+  { id: 'vault-token', num: '04', label: 'Scoped Vault Token', sub: 'Single-Use Proof', icon: 'lock', cx: 765 },
 ];
 
 const snippets: Record<string, string> = {
-  'agent-call': `// 1. Intercept MCP JSON-RPC "tools/call"
-let tool_call = McpToolCall::parse(&request)?;
+  'agent-call': `// 1. Intercept MCP JSON-RPC "tools/call" request
+let call = McpToolCall::parse(&request)?;
 let caller = CallerIdentity::from_mcp_session(&session)?;
 
-// Validate schema and extract caller tool intent
-let (tool_name, arguments) = tool_call.into_parts();`,
+// Extract target tool name and structured JSON arguments
+let (tool_name, args) = call.into_parts();
+let tier = router.security_tier_for(&tool_name)?;
+tracing::info!(tool = %tool_name, sub = %caller.sub, "intercepted MCP call");`,
 
-  'policy-jcs': `// 2. Canonicalize parameters & evaluate Cedar policy
-let digest = authkestra_mcp::jcs_sha256(&session_id, &tool_name, &args, expires_at);
-let decision = engine.evaluate_policy(
-    &caller,
-    "tools:call",
-    &Resource::mcp_tool(&tool_name, &digest),
+  'policy-jcs': `// 2. Canonicalize arguments (RFC 8785 JCS) & evaluate Cedar policy
+let digest = authkestra_mcp::compute_args_digest(
+    &session.id,
+    &tool_name,
+    &args,
+    expires_at,
 )?;
-assert!(decision.is_permitted());`,
+let decision = policy_engine.evaluate(&caller, "tools:call", &tool_name)?;
+if !decision.is_permitted() {
+    return Err(McpError::Forbidden(decision.reason()));
+}`,
 
-  'passkey-pulse': `// 3. Cryptographic HITL passkey step-up challenge
-let challenge = reproof_client
-    .create_challenge(&caller, &digest, Duration::from_secs(300))?;
+  'passkey-pulse': `// 3. Issue step-up challenge & verify FIDO2 passkey assertion
+let challenge = approval_store
+    .create_challenge(&caller, &tool_name, &digest, Duration::from_secs(300))
+    .await?;
 
-// User authenticates with physical FIDO2 biometric pulse
-let approval = reproof_client
-    .verify_passkey_assertion(&challenge, &assertion)
+// Human approves the exact canonical digest with a passkey
+let exec_token = approval_store
+    .verify_passkey_step_up(&challenge.id, &webauthn_assertion)
     .await?;`,
 
-  'vault-token': `// 4. Scoped execution proof & zero-trust token vault
-let proof = tool_vault.dispense_scoped_token(
-    &approval,
-    &["tools:execute:transfer"],
-    Duration::from_secs(60),
-)?;
-let execution = tool_handler.execute(&args, &proof).await?;`,
+  'vault-token': `// 4. Atomically consume execution proof & dispense vault token
+let verified = approval_store
+    .consume_execution_token(&exec_token, &digest)
+    .await?;
+
+let downstream_token = token_broker
+    .dispense_scoped(&verified.caller, &["payments:transfer"], Duration::from_secs(60))
+    .await?;
+let result = tool_handler.execute(&args, &downstream_token).await?;`,
+};
+
+const stageNotes: Record<string, string> = {
+  'agent-call': 'Step 1 of 4 · Parses the incoming JSON-RPC tool invocation and binds caller session context.',
+  'policy-jcs': 'Step 2 of 4 · Hashes canonicalized JSON arguments and returns Err(Forbidden) on policy denial.',
+  'passkey-pulse': 'Step 3 of 4 · Mandates a hardware-backed WebAuthn assertion over the SHA-256 argument digest.',
+  'vault-token': 'Step 4 of 4 · Atomically consumes the single-use approval and resolves a short-lived API token.',
 };
 
 const highlighted = Object.fromEntries(
@@ -52,83 +67,89 @@ const highlighted = Object.fromEntries(
   <div class="copy">
     <h2 id="flow-heading">Cryptographic AI Agent &amp; MCP Tool Execution Flow</h2>
     <p>
-      Watch an autonomous AI agent attempt a high-stakes MCP tool invocation. Authkestra intercepts
-      the JSON-RPC call, locks parameters with RFC 8785 JCS SHA-256 digests, mandates a human
-      passkey biometric step-up, and dispenses a zero-trust, short-lived scoped vault token.
+      Follow a high-stakes MCP tool invocation from request interception to execution. Authkestra
+      hashes canonical arguments with RFC 8785 JCS, evaluates AWS Cedar policy, verifies a human
+      passkey step-up, and dispenses a short-lived downstream token.
     </p>
   </div>
 
   <div class="stage">
     <div class="visual">
-      <svg
-        class="diagram run"
-        viewBox="0 0 880 300"
-        role="img"
-        aria-hidden="true"
-        data-active-stage="agent-call"
-      >
-        <!-- Static background guide rails -->
-        <g class="rails">
-          <path class="rail rail-base" d="M110,140 L770,140" />
-          <path class="rail" d="M110,140 L330,140" pathLength="1" />
-          <path class="rail" d="M330,140 L550,140" pathLength="1" />
-          <path class="rail" d="M550,140 L770,140" pathLength="1" />
-        </g>
-
-        <!-- Animated signal pulses -->
-        <g class="pulses">
-          <path class="pulse p-seg-1" d="M110,140 L330,140" pathLength="1" />
-          <path class="pulse p-seg-2" d="M330,140 L550,140" pathLength="1" />
-          <path class="pulse p-seg-3" d="M550,140 L770,140" pathLength="1" />
-        </g>
-
-        <!-- Dynamic traveling particles -->
-        <g class="particles" aria-hidden="true">
-          <circle class="flow-particle part-1" r="4" cy="140" />
-          <circle class="flow-particle part-2" r="4" cy="140" />
-          <circle class="flow-particle part-3" r="4" cy="140" />
-        </g>
-
-        <!-- Pipeline Nodes -->
-        {stages.map((s, idx) => (
-          <g class="stage-node" data-stage={s.id} transform={`translate(${s.cx}, 140)`}>
-            <!-- Aura glow / Biometric wave rings -->
-            <circle r="44" class="node-aura" />
-            {s.id === 'passkey-pulse' && (
-              <>
-                <circle r="36" class="biometric-pulse wave-1" />
-                <circle r="48" class="biometric-pulse wave-2" />
-              </>
-            )}
-
-            <!-- Step pill badge -->
-            <g transform="translate(0, -56)">
-              <rect x="-26" y="-10" width="52" height="18" rx="9" class="step-pill" />
-              <text x="0" y="3" class="step-text" text-anchor="middle">STEP {idx + 1}</text>
-            </g>
-
-            <!-- Node central chip -->
-            <circle r="28" class="node-chip" />
-            <g transform="translate(-11, -11)" class="node-glyph">
-              <Icon name={s.icon} size={22} />
-            </g>
-
-            <!-- Labels -->
-            <text x="0" y="48" class="node-label" text-anchor="middle">{s.label}</text>
-            <text x="0" y="64" class="node-sub" text-anchor="middle">{s.sub}</text>
+      <div class="diagram-frame">
+        <svg
+          class="diagram run"
+          viewBox="0 0 880 210"
+          role="img"
+          aria-label="4-step MCP tool execution security pipeline"
+          data-active-stage="agent-call"
+        >
+          <!-- Static background guide rails -->
+          <g class="rails">
+            <path class="rail rail-base" d="M115,105 L765,105" />
+            <path class="rail" d="M115,105 L335,105" pathLength="1" />
+            <path class="rail" d="M335,105 L555,105" pathLength="1" />
+            <path class="rail" d="M555,105 L765,105" pathLength="1" />
           </g>
-        ))}
-      </svg>
 
-      <ul class="legend">
+          <!-- Animated signal pulses -->
+          <g class="pulses">
+            <path class="pulse p-seg-1" d="M115,105 L335,105" pathLength="1" />
+            <path class="pulse p-seg-2" d="M335,105 L555,105" pathLength="1" />
+            <path class="pulse p-seg-3" d="M555,105 L765,105" pathLength="1" />
+          </g>
+
+          <!-- Dynamic traveling particles -->
+          <g class="particles" aria-hidden="true">
+            <circle class="flow-particle part-1" r="4.5" cy="105" />
+            <circle class="flow-particle part-2" r="4.5" cy="105" />
+            <circle class="flow-particle part-3" r="4.5" cy="105" />
+          </g>
+
+          <!-- Pipeline Nodes -->
+          {stages.map((s, idx) => (
+            <g class="stage-node" data-stage={s.id} transform={`translate(${s.cx}, 105)`}>
+              <!-- Aura glow / Biometric wave rings -->
+              <circle r="44" class="node-aura" />
+              {s.id === 'passkey-pulse' && (
+                <>
+                  <circle r="36" class="biometric-pulse wave-1" />
+                  <circle r="48" class="biometric-pulse wave-2" />
+                </>
+              )}
+
+              <!-- Step pill badge -->
+              <g transform="translate(0, -58)">
+                <rect x="-34" y="-12" width="68" height="22" rx="11" class="step-pill" />
+                <text x="0" y="3" class="step-text" text-anchor="middle">STEP {idx + 1}</text>
+              </g>
+
+              <!-- Node central chip -->
+              <circle r="30" class="node-chip" />
+              <g transform="translate(-11, -11)" class="node-glyph">
+                <Icon name={s.icon} size={22} />
+              </g>
+
+              <!-- Legible Labels -->
+              <text x="0" y="52" class="node-label" text-anchor="middle">{s.label}</text>
+              <text x="0" y="70" class="node-sub" text-anchor="middle">{s.sub}</text>
+            </g>
+          ))}
+        </svg>
+      </div>
+
+      <!-- 2x2 Step Selector Grid (Never orphans the 4th item) -->
+      <ul class="legend" aria-label="Select ceremony step">
         {stages.map((s) => (
           <li data-stage={s.id} role="button" tabindex="0">
-            <Icon name={s.icon} size={16} aria-hidden="true" />
-            <span>{s.label}</span>
+            <span class="legend-num">{s.num}</span>
+            <Icon name={s.icon} size={16} class="legend-icon" aria-hidden="true" />
+            <span class="legend-text">
+              <strong class="legend-title">{s.label}</strong>
+              <span class="legend-sub">{s.sub}</span>
+            </span>
           </li>
         ))}
       </ul>
-      <p class="pipeline">AI Agent / MCP Tool Call → Policy &amp; JCS SHA-256 Binding → Human Passkey Biometric Pulse → Scoped Execution Proof &amp; Zero-Trust Vault Token</p>
     </div>
 
     <div class="code-panel">
@@ -137,6 +158,7 @@ const highlighted = Object.fromEntries(
         <span class="win yellow"></span>
         <span class="win green"></span>
         <span class="code-title">mcp_execution_ceremony.rs</span>
+        <span class="code-badge">Result&lt;ToolOutput, McpError&gt;</span>
       </div>
       <div class="code-stack">
         {stages.map((s, idx) => (
@@ -149,6 +171,13 @@ const highlighted = Object.fromEntries(
           ))}</code></pre>
         ))}
       </div>
+      <div class="code-footer">
+        {stages.map((s, idx) => (
+          <p class:list={['stage-note', { off: idx !== 0 }]} data-note={s.id}>
+            {stageNotes[s.id]}
+          </p>
+        ))}
+      </div>
     </div>
   </div>
 </section>
@@ -156,6 +185,7 @@ const highlighted = Object.fromEntries(
 <script>
   const svg = document.querySelector<SVGSVGElement>('#flow .diagram');
   const snippetEls = document.querySelectorAll<HTMLElement>('#flow .code[data-snippet]');
+  const noteEls = document.querySelectorAll<HTMLElement>('#flow .stage-note[data-note]');
   const legendItems = document.querySelectorAll<HTMLElement>('#flow .legend li');
   const stageNodes = document.querySelectorAll<SVGGElement>('#flow .stage-node');
 
@@ -172,6 +202,9 @@ const highlighted = Object.fromEntries(
         if (off) el.setAttribute('aria-hidden', 'true');
         else el.removeAttribute('aria-hidden');
       });
+      noteEls.forEach((el) => {
+        el.classList.toggle('off', el.dataset.note !== stageId);
+      });
       legendItems.forEach((l) => l.classList.toggle('active', l.dataset.stage === stageId));
       stageNodes.forEach((node) => node.classList.toggle('active', node.dataset.stage === stageId));
     };
@@ -181,24 +214,34 @@ const highlighted = Object.fromEntries(
       i = (i + 1) % stages.length;
     };
 
+    const selectStage = (stage: string | undefined) => {
+      if (!stage) return;
+      const idx = stages.indexOf(stage);
+      if (idx !== -1) {
+        i = idx;
+        setActive(stage);
+      }
+    };
+
     legendItems.forEach((item) => {
-      item.addEventListener('click', () => {
-        const stage = item.dataset.stage;
-        if (stage) {
-          const idx = stages.indexOf(stage);
-          if (idx !== -1) {
-            i = idx;
-            setActive(stage);
-          }
+      item.addEventListener('click', () => selectStage(item.dataset.stage));
+      item.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          selectStage(item.dataset.stage);
         }
       });
+    });
+
+    stageNodes.forEach((node) => {
+      node.addEventListener('click', () => selectStage(node.dataset.stage));
     });
 
     if (reduced) {
       setActive('policy-jcs');
     } else {
       cycle();
-      setInterval(cycle, 4000);
+      setInterval(cycle, 4500);
     }
   }
 </script>
@@ -211,7 +254,7 @@ const highlighted = Object.fromEntries(
   }
 
   .copy {
-    max-width: 68ch;
+    max-width: 72ch;
     margin-bottom: var(--ak-space-10);
   }
 
@@ -223,28 +266,38 @@ const highlighted = Object.fromEntries(
 
   .copy p {
     margin-top: var(--ak-space-4);
-    color: hsl(var(--muted-foreground));
-    font-size: var(--ak-text-base);
+    color: hsl(var(--ak-neutral-300));
+    font-size: var(--ak-text-lg);
     line-height: var(--ak-leading-relaxed);
   }
 
   .stage {
     display: grid;
-    grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
-    gap: var(--ak-space-8);
-    align-items: start;
+    grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+    gap: var(--ak-space-6);
+    align-items: stretch;
   }
 
   .visual,
   .code-panel {
     min-width: 0;
+    display: flex;
+    flex-direction: column;
   }
 
   .visual {
     background: hsl(var(--card));
     border: 1px solid hsl(var(--border));
     border-radius: var(--ak-radius-xl);
-    padding: var(--ak-space-6);
+    padding: var(--ak-space-5);
+    justify-content: space-between;
+  }
+
+  .diagram-frame {
+    background: hsl(var(--ak-neutral-950));
+    border: 1px solid hsl(var(--border));
+    border-radius: var(--ak-radius-lg);
+    padding: var(--ak-space-3) var(--ak-space-2);
   }
 
   .diagram {
@@ -261,7 +314,7 @@ const highlighted = Object.fromEntries(
   }
 
   .rail-base {
-    stroke: hsl(var(--border) / 0.5);
+    stroke: hsl(var(--border) / 0.6);
     stroke-dasharray: 4 4;
   }
 
@@ -284,10 +337,7 @@ const highlighted = Object.fromEntries(
       stroke-dashoffset: 220;
       opacity: 0.2;
     }
-    30% {
-      opacity: 1;
-    }
-    70% {
+    30%, 70% {
       opacity: 1;
     }
     100% {
@@ -309,7 +359,7 @@ const highlighted = Object.fromEntries(
 
   @keyframes travelParticle {
     0% {
-      cx: 110px;
+      cx: 115px;
       opacity: 0;
       r: 3px;
     }
@@ -322,7 +372,7 @@ const highlighted = Object.fromEntries(
       r: 5px;
     }
     100% {
-      cx: 770px;
+      cx: 765px;
       opacity: 0;
       r: 3px;
     }
@@ -342,15 +392,15 @@ const highlighted = Object.fromEntries(
   }
 
   .stage-node.active .node-aura {
-    fill: hsl(var(--primary-subtle) / 0.4);
-    stroke: hsl(var(--primary-accent) / 0.6);
+    fill: hsl(var(--primary-subtle) / 0.45);
+    stroke: hsl(var(--primary-accent) / 0.65);
     filter: drop-shadow(0 0 12px hsl(var(--primary-accent) / 0.35));
     animation: auraPulse 2s ease-in-out infinite;
   }
 
   @keyframes auraPulse {
-    0%, 100% { r: 44px; opacity: 0.6; }
-    50% { r: 48px; opacity: 1; }
+    0%, 100% { r: 42px; opacity: 0.6; }
+    50% { r: 46px; opacity: 1; }
   }
 
   /* Biometric wave */
@@ -366,12 +416,12 @@ const highlighted = Object.fromEntries(
 
   @keyframes bioRadar {
     0% {
-      r: 28px;
+      r: 30px;
       opacity: 0.8;
       stroke-width: 2px;
     }
     100% {
-      r: 56px;
+      r: 54px;
       opacity: 0;
       stroke-width: 0.5px;
     }
@@ -384,10 +434,10 @@ const highlighted = Object.fromEntries(
   }
 
   .step-text {
-    font-size: 8px;
+    font-size: 10.5px;
     font-family: var(--ak-font-mono);
     font-weight: 700;
-    fill: hsl(var(--muted-foreground));
+    fill: hsl(var(--ak-neutral-300));
     letter-spacing: 0.05em;
   }
 
@@ -414,7 +464,7 @@ const highlighted = Object.fromEntries(
   }
 
   .node-glyph {
-    color: hsl(var(--muted-foreground));
+    color: hsl(var(--ak-neutral-300));
     transition: color var(--ak-duration-fast) var(--ak-ease-out);
   }
 
@@ -423,64 +473,88 @@ const highlighted = Object.fromEntries(
   }
 
   .node-label {
-    font-size: 11px;
+    font-size: 13px;
     font-family: var(--ak-font-sans);
     font-weight: 600;
     fill: hsl(var(--foreground));
   }
 
   .node-sub {
-    font-size: 9px;
+    font-size: 11px;
     font-family: var(--ak-font-mono);
-    fill: hsl(var(--muted-foreground));
+    fill: hsl(var(--ak-neutral-300));
   }
 
   .stage-node.active .node-sub {
     fill: hsl(var(--primary-accent));
   }
 
-  /* Legend */
+  /* 2x2 Step Selector Grid */
   .legend {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--ak-space-2) var(--ak-space-4);
-    margin-top: var(--ak-space-6);
-    padding-top: var(--ak-space-5);
-    border-top: 1px solid hsl(var(--border));
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--ak-space-3);
+    margin-top: var(--ak-space-5);
     list-style: none;
-    padding-left: 0;
+    padding: 0;
   }
 
   .legend li {
-    display: inline-flex;
+    display: flex;
     align-items: center;
-    gap: var(--ak-space-2);
-    font-size: var(--ak-text-xs);
-    color: hsl(var(--muted-foreground));
-    padding: var(--ak-space-1) var(--ak-space-3);
-    border-radius: var(--ak-radius-sm);
+    gap: var(--ak-space-3);
+    padding: var(--ak-space-3) var(--ak-space-4);
+    border-radius: var(--ak-radius-md);
+    background: hsl(var(--ak-neutral-950));
+    border: 1px solid hsl(var(--border));
     cursor: pointer;
     transition: all var(--ak-duration-fast) var(--ak-ease-out);
   }
 
   .legend li:hover {
-    color: hsl(var(--foreground));
-    background: hsl(var(--accent));
+    border-color: hsl(var(--input));
+    background: hsl(var(--popover));
   }
 
   .legend li.active {
-    color: hsl(var(--primary-accent));
-    background: hsl(var(--card));
-    border: 1px solid hsl(var(--border));
-    font-weight: 600;
+    border-color: hsl(var(--primary-accent));
+    background: hsl(var(--primary-subtle) / 0.35);
   }
 
-  .pipeline {
-    margin-top: var(--ak-space-4);
-    font-size: var(--ak-text-2xs);
-    color: hsl(var(--muted-foreground));
+  .legend-num {
+    font-size: var(--ak-text-xs);
     font-family: var(--ak-font-mono);
-    line-height: var(--ak-leading-normal);
+    font-weight: 600;
+    color: hsl(var(--muted-foreground));
+  }
+
+  .legend li.active .legend-num,
+  .legend li.active .legend-icon {
+    color: hsl(var(--primary-accent));
+  }
+
+  .legend-icon {
+    color: hsl(var(--ak-neutral-300));
+    flex-shrink: 0;
+  }
+
+  .legend-text {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+
+  .legend-title {
+    font-size: var(--ak-text-sm);
+    font-weight: 600;
+    color: hsl(var(--foreground));
+    line-height: var(--ak-leading-snug);
+  }
+
+  .legend-sub {
+    font-size: var(--ak-text-xs);
+    font-family: var(--ak-font-mono);
+    color: hsl(var(--muted-foreground));
   }
 
   /* Code Panel */
@@ -489,7 +563,6 @@ const highlighted = Object.fromEntries(
     border: 1px solid hsl(var(--border));
     border-radius: var(--ak-radius-xl);
     overflow: hidden;
-    align-self: stretch;
   }
 
   .code-chrome {
@@ -513,13 +586,22 @@ const highlighted = Object.fromEntries(
 
   .code-title {
     margin-left: var(--ak-space-2);
-    font-size: var(--ak-text-2xs);
+    font-size: var(--ak-text-xs);
+    font-family: var(--ak-font-mono);
+    color: hsl(var(--ak-neutral-300));
+  }
+
+  .code-badge {
+    margin-left: auto;
+    font-size: var(--ak-text-xs);
     font-family: var(--ak-font-mono);
     color: hsl(var(--muted-foreground));
   }
 
   .code-stack {
     display: grid;
+    flex: 1;
+    align-items: center;
   }
 
   .code-stack > .code {
@@ -530,8 +612,8 @@ const highlighted = Object.fromEntries(
     margin: 0;
     padding: var(--ak-space-5);
     font-family: var(--ak-font-mono);
-    font-size: var(--ak-text-xs);
-    line-height: var(--ak-leading-relaxed);
+    font-size: var(--ak-text-sm);
+    line-height: 1.65;
     overflow-x: auto;
   }
 
@@ -552,6 +634,25 @@ const highlighted = Object.fromEntries(
   .code-line :global(.t-comment) { color: hsl(var(--code-comment)); font-style: italic; }
   .code-line :global(.t-fn) { color: hsl(var(--code-fn)); }
 
+  .code-footer {
+    display: grid;
+    padding: var(--ak-space-3) var(--ak-space-5);
+    background: hsl(var(--ak-neutral-900));
+    border-top: 1px solid hsl(var(--border));
+  }
+
+  .stage-note {
+    grid-area: 1 / 1;
+    font-size: var(--ak-text-xs);
+    font-family: var(--ak-font-mono);
+    color: hsl(var(--ak-neutral-300));
+    margin: 0;
+  }
+
+  .stage-note.off {
+    visibility: hidden;
+  }
+
   @media (prefers-reduced-motion: reduce) {
     .pulse {
       stroke-dashoffset: 0 !important;
@@ -570,7 +671,7 @@ const highlighted = Object.fromEntries(
     }
   }
 
-  @media (max-width: 900px) {
+  @media (max-width: 960px) {
     .stage {
       grid-template-columns: 1fr;
     }
@@ -581,5 +682,11 @@ const highlighted = Object.fromEntries(
       padding: 0 var(--ak-space-4) var(--ak-space-16);
     }
     .visual { padding: var(--ak-space-4); }
+    .legend {
+      grid-template-columns: 1fr;
+    }
+    .code {
+      font-size: var(--ak-text-xs);
+    }
   }
 </style>

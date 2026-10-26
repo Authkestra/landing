@@ -10,63 +10,69 @@ const clientMethods = [
   },
   {
     icon: 'smartphone',
-    title: 'TOTP (authenticator apps)',
-    body: 'Time-based one-time codes for a second factor, enrolled and verified against your own store.',
+    title: 'TOTP (Authenticator Apps)',
+    body: 'Time-based one-time codes for second-factor verification against your own credential store.',
     href: 'https://docs.authkestra.com/providers/totp/',
   },
   {
     icon: 'link',
-    title: 'Magic link',
-    body: 'A single-use link minted server-side with AtomicConsume — guaranteed single redemption.',
+    title: 'Magic Link',
+    body: 'Single-use sign-in links minted server-side with AtomicConsume to guarantee one-time redemption.',
     href: 'https://docs.authkestra.com/providers/magic-link/',
   },
   {
     icon: 'message-square-code',
-    title: 'Email / SMS one-time codes',
-    body: 'Short numeric codes with real attempt budgets (AtomicDecrement) and resend rate limits.',
+    title: 'Email / SMS One-Time Codes',
+    body: 'Short verification codes with atomic attempt budgets (AtomicDecrement) and resend rate limits.',
     href: 'https://docs.authkestra.com/providers/otp/',
   },
   {
     icon: 'list-checks',
-    title: 'Recovery codes',
-    body: 'Look-up secret authenticators (NIST SP 800-63B) hashed with Argon2id and re-proof protected.',
+    title: 'Recovery Codes',
+    body: 'Backup authenticators hashed with Argon2id and gated behind primary-factor re-proof.',
     href: 'https://docs.authkestra.com/providers/recovery-codes/',
   },
   {
     icon: 'key-round',
-    title: 'Stateless OAuth2',
-    body: 'Social sign-in with the OAuth dance handled in AES-256-GCM cookies — zero DB session overhead.',
+    title: 'Stateless OAuth 2.1',
+    body: 'Social sign-in with PKCE and state encrypted in AES-256-GCM cookies—zero database session state.',
     href: 'https://docs.authkestra.com/providers/oauth2/',
   },
   {
     icon: 'id-card',
-    title: 'OIDC provider (client)',
-    body: 'Verify identity against any OpenID Connect provider using discovery and cached signing keys.',
+    title: 'OIDC Discovery Client',
+    body: 'Verify identity against any OpenID Connect provider using metadata discovery and JWKS caching.',
     href: 'https://docs.authkestra.com/providers/oidc/',
   },
   {
     icon: 'server',
-    title: 'Client credentials',
-    body: 'Machine-to-machine authentication with private_key_jwt (RFC 7523) for backend microservices.',
+    title: 'Client Credentials',
+    body: 'Machine-to-machine service authentication with private_key_jwt assertions for backend APIs.',
     href: 'https://docs.authkestra.com/providers/client-credentials/',
   },
   {
     icon: 'tv-minimal',
-    title: 'Device flow',
-    body: 'RFC 8628 device authorization grant for TVs, CLI utilities, and headless environments.',
+    title: 'Device Authorization Flow',
+    body: 'Browserless sign-in grant for CLI tools, smart TVs, and headless developer environments.',
     href: 'https://docs.authkestra.com/providers/device-flow/',
   },
   {
     icon: 'shield-check',
-    title: 'Bot protection (CAPTCHA)',
-    body: 'Challenge suspect traffic with Cloudflare Turnstile or hCaptcha before hitting auth logic.',
+    title: 'Bot Protection (CAPTCHA)',
+    body: 'Verify Cloudflare Turnstile or hCaptcha tokens at the edge before invoking auth handlers.',
     href: 'https://docs.authkestra.com/providers/bot-protection/',
   },
   {
     icon: 'badge-check',
-    title: 'Device signatures',
-    body: 'Cryptographic proof-of-possession and body digest hashing (bdh) via authkestra-devsig.',
+    title: 'Device Signatures',
+    body: 'Hardware-backed request signing and payload digest verification via authkestra-devsig.',
     href: 'https://docs.authkestra.com/providers/device-signatures/',
+  },
+  {
+    icon: 'puzzle',
+    title: 'Custom AuthMethod Trait',
+    body: 'Implement the async AuthMethod trait to compose enterprise SAML, LDAP, or custom authenticators.',
+    href: 'https://docs.authkestra.com/concepts/architecture/',
   },
 ];
 
@@ -75,36 +81,43 @@ const serverRoles = [
     icon: 'bot',
     title: 'MCP Server Security (authkestra-mcp)',
     badge: 'AI Agents',
-    body: 'Three security tiers (Public, Scoped, HumanApproved), JCS parameter binding, and zero-trust downstream vault.',
+    body: 'Three security tiers (Public, Scoped, HumanApproved), JCS argument binding, and encrypted token vault.',
     href: 'https://docs.authkestra.com/guides/ai-agents/',
   },
   {
     icon: 'server',
     title: 'Full OpenID Provider (authkestra-op)',
     badge: 'IdP Server',
-    body: 'Full embedded OIDC Provider with RFC 8693 Token Exchange, Device Flow, JWKS rotation, and client registration.',
+    body: 'Embedded OIDC Provider with Token Exchange, Device Flow, JWKS key rotation, and client management.',
     href: 'https://docs.authkestra.com/advanced/op-server/',
   },
   {
     icon: 'shield',
     title: 'Resource Server Guard (authkestra-resource)',
     badge: 'API Edge',
-    body: 'Validate JWTs/tokens with RFC 9449 DPoP, RFC 8705 mTLS binding, multi-issuer JWKS, and scope enforcement.',
+    body: 'Validate JWTs and opaque tokens with DPoP and mTLS sender binding, multi-issuer JWKS, and scopes.',
     href: 'https://docs.authkestra.com/advanced/resource-server/',
   },
   {
     icon: 'layers',
     title: 'AWS Cedar Policy Engine (authkestra-policy)',
     badge: 'Authorization',
-    body: 'High-performance declarative attribute-based access control (ABAC) evaluated in-process in microseconds.',
+    body: 'Declarative attribute-based access control (ABAC) evaluated in-process in microseconds.',
     href: 'https://docs.authkestra.com/advanced/policy-engine/',
   },
   {
     icon: 'radio',
     title: 'Continuous Access Evaluation (authkestra-ssf)',
     badge: 'Zero-Trust',
-    body: 'Ingest OpenID Shared Signals & Events (CAEP/SSF RFC 8417) to terminate sessions and revoke tokens in real time.',
+    body: 'Receive OpenID Shared Signals & Events (CAEP/SSF) to revoke compromised sessions in real time.',
     href: 'https://docs.authkestra.com/advanced/continuous-access-evaluation/',
+  },
+  {
+    icon: 'key',
+    title: 'Session & Token Family Engine (authkestra-session)',
+    badge: 'Persistence',
+    body: 'Refresh token rotation, replay breach detection, and pluggable PostgreSQL, MySQL, SQLite, or Redis stores.',
+    href: 'https://docs.authkestra.com/storage/overview/',
   },
 ];
 ---
@@ -112,21 +125,27 @@ const serverRoles = [
   <div class="inner">
     <h2 id="methods-heading">Authentication Methods &amp; Server Roles</h2>
     <p class="lead">
-      Each client method and server capability is a composable component in the same engine.
-      Mix them, chain them, or embed them into an existing API — your core code architecture stays unchanged.
+      Every client authentication strategy and server role is a composable module in the same
+      engine. Mix them, chain them, or embed them into an existing Rust service without changing
+      your application architecture.
     </p>
 
-    <!-- Part 1: Client Strategies -->
+    <!-- Part 1: Client Strategies (12 items = balanced 4x3 & 3x4 grids) -->
     <div class="sub-section">
       <div class="sub-header">
         <span class="sub-tag">CLIENT AUTHENTICATION</span>
-        <p class="sub-lead">11 strategies to prove identity and authenticate users or devices:</p>
+        <p class="sub-lead">12 composable strategies to authenticate users, services, and devices:</p>
       </div>
       <ul class="grid client-grid">
         {clientMethods.map((m) => (
           <li>
             <a class="card" href={m.href} target="_blank" rel="noopener noreferrer">
-              <Icon name={m.icon} size={24} class="icon" aria-hidden="true" />
+              <div class="card-top">
+                <div class="icon-tile">
+                  <Icon name={m.icon} size={20} class="icon" aria-hidden="true" />
+                </div>
+                <span class="card-arrow" aria-hidden="true">→</span>
+              </div>
               <h3>{m.title}</h3>
               <p>{m.body}</p>
             </a>
@@ -135,19 +154,24 @@ const serverRoles = [
       </ul>
     </div>
 
-    <!-- Part 2: Enterprise Server Roles -->
+    <!-- Part 2: Enterprise Server Roles (6 items = balanced 3x2 grid) -->
     <div class="sub-section roles-section">
       <div class="sub-header">
-        <span class="sub-tag">ENTERPRISE SERVER ROLES</span>
-        <p class="sub-lead">5 embedded server engines to protect APIs, issue tokens, and enforce policy:</p>
+        <span class="sub-tag">EMBEDDED SERVER ROLES</span>
+        <p class="sub-lead">6 server engines to issue tokens, guard APIs, and enforce policy in-process:</p>
       </div>
       <ul class="grid roles-grid">
         {serverRoles.map((r) => (
           <li>
             <a class="card role-card" href={r.href} target="_blank" rel="noopener noreferrer">
               <div class="role-top">
-                <Icon name={r.icon} size={24} class="icon" aria-hidden="true" />
-                <span class="role-badge">{r.badge}</span>
+                <div class="icon-tile">
+                  <Icon name={r.icon} size={20} class="icon" aria-hidden="true" />
+                </div>
+                <div class="role-meta">
+                  <span class="role-badge">{r.badge}</span>
+                  <span class="card-arrow" aria-hidden="true">→</span>
+                </div>
               </div>
               <h3>{r.title}</h3>
               <p>{r.body}</p>
@@ -181,7 +205,7 @@ const serverRoles = [
     max-width: 68ch;
     font-size: var(--ak-text-lg);
     line-height: var(--ak-leading-relaxed);
-    color: hsl(var(--muted-foreground));
+    color: hsl(var(--ak-neutral-300));
   }
 
   .sub-section {
@@ -200,7 +224,7 @@ const serverRoles = [
 
   .sub-tag {
     display: inline-block;
-    font-size: var(--ak-text-2xs);
+    font-size: var(--ak-text-xs);
     font-family: var(--ak-font-mono);
     font-weight: 600;
     color: hsl(var(--primary-accent));
@@ -209,8 +233,8 @@ const serverRoles = [
 
   .sub-lead {
     margin-top: var(--ak-space-1);
-    font-size: var(--ak-text-sm);
-    color: hsl(var(--muted-foreground));
+    font-size: var(--ak-text-base);
+    color: hsl(var(--ak-neutral-300));
   }
 
   .grid {
@@ -242,23 +266,39 @@ const serverRoles = [
   }
 
   .card:hover {
-    border-color: hsl(var(--input));
+    border-color: hsl(var(--primary-accent) / 0.6);
     background: hsl(var(--popover));
+    transform: translateY(-2px);
   }
 
-  .role-card {
-    background: hsl(var(--card));
-    border: 1px solid hsl(var(--border));
-  }
-
+  .card-top,
   .role-top {
     display: flex;
     align-items: center;
     justify-content: space-between;
+    gap: var(--ak-space-2);
+  }
+
+  .icon-tile {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: var(--ak-radius-sm);
+    background: hsl(var(--ak-neutral-800));
+    color: hsl(var(--primary-accent));
+    flex-shrink: 0;
+  }
+
+  .role-meta {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--ak-space-2);
   }
 
   .role-badge {
-    font-size: var(--ak-text-2xs);
+    font-size: var(--ak-text-xs);
     font-family: var(--ak-font-mono);
     padding: 2px 8px;
     border-radius: var(--ak-radius-sm);
@@ -267,21 +307,29 @@ const serverRoles = [
     border: 1px solid hsl(var(--border));
   }
 
-  .icon {
+  .card-arrow {
+    font-size: var(--ak-text-sm);
+    font-family: var(--ak-font-mono);
+    color: hsl(var(--muted-foreground));
+    transition: transform var(--ak-duration-fast) var(--ak-ease-out), color var(--ak-duration-fast) var(--ak-ease-out);
+  }
+
+  .card:hover .card-arrow {
     color: hsl(var(--primary-accent));
+    transform: translateX(3px);
   }
 
   h3 {
-    margin-top: var(--ak-space-3);
-    font-size: var(--ak-text-sm);
+    margin-top: var(--ak-space-4);
+    font-size: var(--ak-text-base);
     font-weight: 600;
     color: hsl(var(--foreground));
   }
 
   .card p {
     margin-top: var(--ak-space-2);
-    font-size: var(--ak-text-xs);
-    color: hsl(var(--muted-foreground));
+    font-size: var(--ak-text-sm);
+    color: hsl(var(--ak-neutral-300));
     line-height: var(--ak-leading-normal);
   }
 

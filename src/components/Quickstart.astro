@@ -31,7 +31,7 @@ router.register_tool(
     id: 'tab-passkeys',
     label: 'Passkeys & Step-Up Re-Proof',
     title: 'FIDO2 Passkeys with Re-Proof Gating',
-    lead: 'Phishing-resistant WebAuthn authentication with mandatory re-proof checks. Enrolling a new authenticator requires proving an existing factor first, stopping session hijacking attacks cold.',
+    lead: 'Phishing-resistant WebAuthn authentication with mandatory re-proof checks. Enrolling a new authenticator requires proving an existing factor first, preventing session-hijack privilege escalation.',
     docsHref: 'https://docs.authkestra.com/providers/passkeys/',
     docsText: 'Read the Passkeys guide',
     cargo: `authkestra = { version = "0.13", features = ["axum", "memory", "passkeys"] }`,
@@ -254,7 +254,7 @@ const renderedTabs = tabs.map((tab) => ({
     margin-top: var(--ak-space-4);
     font-size: var(--ak-text-lg);
     line-height: var(--ak-leading-relaxed);
-    color: hsl(var(--muted-foreground));
+    color: hsl(var(--ak-neutral-300));
   }
 
   /* Tablist Header */
@@ -325,7 +325,7 @@ const renderedTabs = tabs.map((tab) => ({
   .panel-copy p {
     margin-top: var(--ak-space-4);
     font-size: var(--ak-text-base);
-    color: hsl(var(--muted-foreground));
+    color: hsl(var(--ak-neutral-300));
     line-height: var(--ak-leading-relaxed);
   }
 

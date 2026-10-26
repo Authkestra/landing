@@ -4,27 +4,28 @@ import { highlightRust, highlightRustLine } from '../lib/rust-highlight';
 
 const tabs = [
   {
-    id: 'tab-oauth2',
-    label: 'Web App OAuth2 (Stateless)',
-    title: 'Stateless OAuth2 login in 4 lines',
-    lead: 'Add the facade crate with the features you need, then build the engine. OAuth state and PKCE verifiers are encrypted into secure cookies — no database session store required.',
-    docsHref: 'https://docs.authkestra.com/providers/oauth2/',
-    docsText: 'Read the OAuth2 guide',
-    cargo: `authkestra = { version = "0.13", features = ["axum", "memory", "github"] }`,
-    rust: `use authkestra::axum::AxumStatelessExt;
-use authkestra::core::{Authkestra, OAuth2Flow};
-use authkestra::oauth2::GithubProvider;
-use axum::{routing::get, Router};
+    id: 'tab-mcp',
+    label: 'MCP Server Agent Guard',
+    title: 'Model Context Protocol tool security',
+    lead: 'Intercept MCP JSON-RPC requests across 3 security tiers. High-stakes tools require cryptographic parameter binding (RFC 8785 JCS) and human biometric approval before execution.',
+    docsHref: 'https://docs.authkestra.com/guides/ai-agents/',
+    docsText: 'Read the AI Agent & MCP guide',
+    cargo: `authkestra = { version = "0.13", features = ["mcp", "axum", "memory"] }`,
+    rust: `use authkestra::mcp::{McpRouter, McpSecurityTier, ReproofRequirement};
+use authkestra::mcp::vault::EncryptedKvTokenVault;
 
-let github = GithubProvider::new(client_id, client_secret, redirect_uri);
-let engine = Authkestra::builder()
-    .provider(OAuth2Flow::new(github))
-    .build();
+let mut router = McpRouter::new();
 
-let app = Router::new()
-    .route("/auth/login/github", get(authkestra_login))
-    .route("/auth/callback/github", get(authkestra_callback))
-    .with_authkestra(engine);`,
+// High-stakes financial execution tool requires cryptographic HITL approval
+router.register_tool(
+    "execute_transfer",
+    McpSecurityTier::HumanApproved {
+        required_scopes: vec!["payments:write".into()],
+        reproof: ReproofRequirement::FreshPasskey,
+        approval_ttl_secs: 300,
+    },
+    transfer_handler,
+);`,
   },
   {
     id: 'tab-passkeys',
@@ -49,28 +50,27 @@ let challenge = passkeys.start_register(
 ).await?;`,
   },
   {
-    id: 'tab-mcp',
-    label: 'MCP Server Agent Guard',
-    title: 'Model Context Protocol tool security',
-    lead: 'Intercept MCP JSON-RPC requests across 3 security tiers. High-stakes tools require cryptographic parameter binding (RFC 8785 JCS) and human biometric approval before execution.',
-    docsHref: 'https://docs.authkestra.com/guides/ai-agents/',
-    docsText: 'Read the AI Agent & MCP guide',
-    cargo: `authkestra = { version = "0.13", features = ["mcp", "axum", "memory"] }`,
-    rust: `use authkestra::mcp::{McpRouter, McpSecurityTier, ReproofRequirement};
-use authkestra::mcp::vault::EncryptedKvTokenVault;
+    id: 'tab-oauth2',
+    label: 'Web App OAuth2 (Stateless)',
+    title: 'Stateless OAuth2 login in 4 lines',
+    lead: 'Add the facade crate with the features you need, then build the engine. OAuth state and PKCE verifiers are encrypted into secure cookies — no database session store required.',
+    docsHref: 'https://docs.authkestra.com/providers/oauth2/',
+    docsText: 'Read the OAuth2 guide',
+    cargo: `authkestra = { version = "0.13", features = ["axum", "memory", "github"] }`,
+    rust: `use authkestra::axum::AxumStatelessExt;
+use authkestra::core::{Authkestra, OAuth2Flow};
+use authkestra::oauth2::GithubProvider;
+use axum::{routing::get, Router};
 
-let mut router = McpRouter::new();
+let github = GithubProvider::new(client_id, client_secret, redirect_uri);
+let engine = Authkestra::builder()
+    .provider(OAuth2Flow::new(github))
+    .build();
 
-// High-stakes financial execution tool requires cryptographic HITL approval
-router.register_tool(
-    "execute_transfer",
-    McpSecurityTier::HumanApproved {
-        required_scopes: vec!["payments:write".into()],
-        reproof: ReproofRequirement::FreshPasskey,
-        approval_ttl_secs: 300,
-    },
-    transfer_handler,
-);`,
+let app = Router::new()
+    .route("/auth/login/github", get(authkestra_login))
+    .route("/auth/callback/github", get(authkestra_callback))
+    .with_authkestra(engine);`,
   },
 ];
 

@@ -50,11 +50,9 @@ export default defineConfig({
     ...docsRedirects,
 
     /*
-      The comparison did not move to the docs — it moved onto this page, which
-      is where someone weighing Authkestra against the alternatives actually
-      is. So this one is the only redirect that stays on this domain.
+      Redirect legacy comparison URL to architecture documentation.
     */
-    '/concepts/comparison': '/#comparison',
+    '/concepts/comparison': 'https://docs.authkestra.com/concepts/architecture/',
     '/llms-full.txt': 'https://docs.authkestra.com/llms-full.txt',
   },
 });

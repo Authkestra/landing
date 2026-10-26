@@ -256,37 +256,66 @@ check('JSON-LD contains FAQPage schema with technical questions', () => {
 // -----------------------------------------------------------------------------
 console.log(`\n${BOLD}4. Key Section Anchors & Component Verification${RESET}`);
 
-check('AI & Model Context Protocol (MCP) Security section is present', () => {
-  const hasId = /id=["'](?:ai-agents-mcp|ai-mcp|mcp-security|agent-auth)["']/i.test(html);
-  const hasText = /Model Context Protocol/i.test(html) && /authkestra-mcp/i.test(html);
-  if (!hasId && !hasText) {
-    throw new Error('AI & MCP Security section not detected (checked section ID and MCP keywords)');
+check('Hero lead/subtitle contains <= 45 words', () => {
+  const leadMatch = html.match(/<p\b[^>]*class=["'][^"']*\blead\b[^"']*["'][^>]*>([\s\S]*?)<\/p>/i);
+  if (!leadMatch) {
+    throw new Error('Hero lead paragraph not found in index.html');
   }
-  return 'AI & MCP Security section present';
+  const cleanText = leadMatch[1].replace(/<[^>]+>/g, '').trim();
+  const words = cleanText.split(/\s+/).filter(Boolean);
+  if (words.length > 45) {
+    throw new Error(`Hero lead contains ${words.length} words (max 45 allowed): "${cleanText}"`);
+  }
+  return `${words.length} words (cap: 45)`;
 });
 
-check('3-tab Interactive Quickstart showcase is present', () => {
-  const hasQuickstartId = /id=["']quickstart["']/i.test(html);
-  if (!hasQuickstartId) {
-    throw new Error('Section with id="quickstart" not found');
+check('AI & MCP Security (#ai-mcp-security) appears immediately after Hero', () => {
+  const hasId = /id=["']ai-mcp-security["']/i.test(html);
+  if (!hasId) {
+    throw new Error('Section with id="ai-mcp-security" not found');
   }
-  // Check for tab roles or tab buttons or multiple snippets
-  const hasTabs = /role=["']tab["']/i.test(html)
-    || /class=["'][^"']*tab[^"']*["']/i.test(html)
-    || /data-snippet=/i.test(html);
-  if (!hasTabs) {
-    throw new Error('Quickstart does not exhibit tab structure');
+  const heroIdx = html.indexOf('class="hero"');
+  const aiIdx = html.indexOf('id="ai-mcp-security"');
+  const methodsIdx = html.indexOf('id="methods"');
+
+  if (heroIdx === -1) throw new Error('Hero section not found');
+  if (aiIdx < heroIdx) throw new Error('AI & MCP section appears before Hero');
+  if (methodsIdx !== -1 && aiIdx > methodsIdx) {
+    throw new Error('AI & MCP section appears after #methods (must appear before general auth methods)');
   }
-  return 'Quickstart section present with tabbed code showcase';
+  return '#ai-mcp-security ordered immediately after Hero';
 });
 
-check('Comparison Matrix section is present', () => {
+check('Comparison section is absent from dist/index.html (no table, no id="comparison")', () => {
   const hasComparisonId = /id=["']comparison["']/i.test(html);
   const hasTable = /<table\b[^>]*>/i.test(html);
-  if (!hasComparisonId && !hasTable) {
-    throw new Error('Comparison matrix section (id="comparison" or <table>) not found');
+  if (hasComparisonId || hasTable) {
+    throw new Error('Comparison section (id="comparison" or <table>) is still present in dist/index.html');
   }
-  return 'Comparison matrix present';
+  return 'Comparison section and tables completely absent';
+});
+
+check('Quickstart showcase has MCP Server Agent Guard (authkestra-mcp) as Tab 1 (active by default)', () => {
+  const tabBtnMatch = html.match(/<button\b[^>]*role=["']tab["'][^>]*>([\s\S]*?)<\/button>/i);
+  if (!tabBtnMatch) {
+    throw new Error('Quickstart tab button not found');
+  }
+  const firstTabText = tabBtnMatch[1].replace(/<[^>]+>/g, '').trim();
+  if (!/MCP Server Agent Guard/i.test(firstTabText) && !/authkestra-mcp/i.test(firstTabText)) {
+    throw new Error(`First tab is "${firstTabText}", expected MCP Server Agent Guard (authkestra-mcp)`);
+  }
+  return `Tab 1: "${firstTabText}"`;
+});
+
+check('Multiple animated 2D SVG diagrams present with prefers-reduced-motion queries', () => {
+  const svgMatches = [...html.matchAll(/<svg\b[^>]*class=["'][^"']*(?:diagram|tier-diagram|typestate-diagram)[^"']*["']/gi)];
+  if (svgMatches.length < 2) {
+    throw new Error(`Found ${svgMatches.length} 2D SVG diagrams (expected at least 2 animated diagrams)`);
+  }
+  if (!html.includes('prefers-reduced-motion')) {
+    throw new Error('Missing prefers-reduced-motion media query for SVG animations');
+  }
+  return `${svgMatches.length} 2D SVG diagrams validated with prefers-reduced-motion support`;
 });
 
 check('Technical FAQ section is present', () => {
@@ -383,16 +412,16 @@ check(`All ${REQUIRED_REDIRECTS.length} legacy documentation redirect paths exis
 });
 
 // Also check concepts/comparison redirect
-check('Local redirect /concepts/comparison -> /#comparison exists in dist/', () => {
+check('Redirect /concepts/comparison -> https://docs.authkestra.com/concepts/architecture/ exists in dist/', () => {
   const compPath = path.join(DIST_DIR, 'concepts/comparison/index.html');
   if (!fs.existsSync(compPath)) {
     throw new Error('dist/concepts/comparison/index.html does not exist');
   }
   const content = fs.readFileSync(compPath, 'utf8');
-  if (!/#comparison/i.test(content)) {
-    throw new Error('dist/concepts/comparison/index.html does not redirect to #comparison');
+  if (!/https:\/\/docs\.authkestra\.com\/concepts\/architecture\//i.test(content)) {
+    throw new Error(`dist/concepts/comparison/index.html does not redirect to https://docs.authkestra.com/concepts/architecture/: "${content}"`);
   }
-  return 'Redirects to /#comparison';
+  return 'Redirects to https://docs.authkestra.com/concepts/architecture/';
 });
 
 // -----------------------------------------------------------------------------

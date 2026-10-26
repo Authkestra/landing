@@ -3,18 +3,6 @@ import Icon from './Icon.astro';
 
 const faqs = [
   {
-    q: 'Why an embedded identity engine rather than a standalone sidecar IdP (Keycloak, Ory, Zitadel)?',
-    a: 'A standalone identity server adds extra microservice deployment overhead, database backups, network latency, and operational complexity. Authkestra embeds directly into your Rust binary as a compile-time safe library, giving you a full OpenID Provider, OAuth2 client, Resource Server, and Passkey engine in-process with zero network hops or dedicated databases.',
-  },
-  {
-    q: 'How does Stateless OAuth work without storing sessions in a database?',
-    a: 'Authkestra encapsulates OAuth2 authorization state and PKCE code verifiers inside AES-256-GCM encrypted, authenticated cookies (__Host-authkestra_state). The browser holds the encrypted state during the OAuth redirect dance. Upon callback, the engine verifies the authentication tag and decrypts the state in memory, allowing your application to scale horizontally across servers without a shared Redis or SQL session store.',
-  },
-  {
-    q: 'What is Re-Proof Gating and how does it prevent session escalation?',
-    a: 'In many web applications, an attacker who steals an active session cookie can immediately register a new passkey or TOTP authenticator to lock out the genuine owner. Authkestra enforces Re-Proof Gating: registering high-stakes authenticators requires verifying an existing primary factor (ReproofRequirement::FreshPasskey or ReproofRequirement::FreshPassword) within a strict time window, closing the session-hijack-then-enrol vulnerability.',
-  },
-  {
     q: 'How does authkestra-mcp secure AI agents and Model Context Protocol servers?',
     a: 'authkestra-mcp provides a 3-tier security architecture for MCP JSON-RPC tools: Tier 1 (Public) for unauthenticated queries; Tier 2 (Scoped) requiring OAuth 2.1 bearer tokens with RFC 9728 discovery and DPoP binding; and Tier 3 (HumanApproved) requiring cryptographic step-up approval. Furthermore, the DownstreamTokenBroker safely resolves third-party API credentials without exposing refresh tokens or long-lived secrets in the LLM context window.',
   },
@@ -23,12 +11,24 @@ const faqs = [
     a: 'When a tool requires Human-in-the-Loop step-up approval, Authkestra applies RFC 8785 JSON Canonicalization Scheme (JCS) to the tool\'s arguments and computes a deterministic SHA-256 challenge digest over (session_id, tool_name, jcs_arguments, expires_at). If an AI agent or malicious actor alters even a single parameter value or order before execution, the cryptographic digest check fails, rejecting execution with a parameter mismatch error.',
   },
   {
-    q: 'Can I use Authkestra with any database or web framework?',
-    a: 'Yes. Authkestra\'s engine core is pure Rust logic with zero framework dependencies. First-party adapters exist for Axum (authkestra-axum) and Actix-web (authkestra-actix). Persistence is defined via traits (KvStore, SessionStore, CredentialStore, OpStore). We provide built-in in-memory, Redis, and SQL (PostgreSQL, MySQL, SQLite) implementations, or you can implement the traits for your custom data store.',
-  },
-  {
     q: 'How do AI coding assistants discover Authkestra APIs via llms.txt and Claude skills?',
     a: 'Authkestra publishes machine-readable API summaries at https://authkestra.com/llms.txt and comprehensive documentation at https://docs.authkestra.com/llms-full.txt. Additionally, the official Authkestra/skills repository provides structured Claude Code / agent skills that teach AI assistants exact typestate builder constraints, Cargo feature flags, and store implementations.',
+  },
+  {
+    q: 'What is Re-Proof Gating and how does it prevent session escalation?',
+    a: 'In many web applications, an attacker who steals an active session cookie can immediately register a new passkey or TOTP authenticator to lock out the genuine owner. Authkestra enforces Re-Proof Gating: registering high-stakes authenticators requires verifying an existing primary factor (ReproofRequirement::FreshPasskey or ReproofRequirement::FreshPassword) within a strict time window, closing the session-hijack-then-enrol vulnerability.',
+  },
+  {
+    q: 'Why an embedded identity engine rather than a standalone sidecar IdP (Keycloak, Ory, Zitadel)?',
+    a: 'A standalone identity server adds extra microservice deployment overhead, database backups, network latency, and operational complexity. Authkestra embeds directly into your Rust binary as a compile-time safe library, giving you a full OpenID Provider, OAuth2 client, Resource Server, and Passkey engine in-process with zero network hops or dedicated databases.',
+  },
+  {
+    q: 'How does Stateless OAuth work without storing sessions in a database?',
+    a: 'Authkestra encapsulates OAuth2 authorization state and PKCE code verifiers inside AES-256-GCM encrypted, authenticated cookies (__Host-authkestra_state). The browser holds the encrypted state during the OAuth redirect dance. Upon callback, the engine verifies the authentication tag and decrypts the state in memory, allowing your application to scale horizontally across servers without a shared Redis or SQL session store.',
+  },
+  {
+    q: 'Can I use Authkestra with any database or web framework?',
+    a: 'Yes. Authkestra\'s engine core is pure Rust logic with zero framework dependencies. First-party adapters exist for Axum (authkestra-axum) and Actix-web (authkestra-actix). Persistence is defined via traits (KvStore, SessionStore, CredentialStore, OpStore). We provide built-in in-memory, Redis, and SQL (PostgreSQL, MySQL, SQLite) implementations, or you can implement the traits for your custom data store.',
   },
 ];
 ---

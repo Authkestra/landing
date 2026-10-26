@@ -1,52 +1,233 @@
 ---
+import Icon from './Icon.astro';
 import { highlightRust, highlightRustLine } from '../lib/rust-highlight';
 
-const cargo = `authkestra = { version = "0.13", features = ["axum", "memory", "github"] }`;
+const tabs = [
+  {
+    id: 'tab-oauth2',
+    label: 'Web App OAuth2 (Stateless)',
+    title: 'Stateless OAuth2 login in 4 lines',
+    lead: 'Add the facade crate with the features you need, then build the engine. OAuth state and PKCE verifiers are encrypted into secure cookies — no database session store required.',
+    docsHref: 'https://docs.authkestra.com/providers/oauth2/',
+    docsText: 'Read the OAuth2 guide',
+    cargo: `authkestra = { version = "0.13", features = ["axum", "memory", "github"] }`,
+    rust: `use authkestra::axum::AxumStatelessExt;
+use authkestra::core::{Authkestra, OAuth2Flow};
+use authkestra::oauth2::GithubProvider;
+use axum::{routing::get, Router};
 
-const rust = `let github_provider = GithubProvider::new(client_id, client_secret, redirect_uri);
-let session_store: Arc<dyn SessionStore> = Arc::new(MemoryStore::default());
+let github = GithubProvider::new(client_id, client_secret, redirect_uri);
+let engine = Authkestra::builder()
+    .provider(OAuth2Flow::new(github))
+    .build();
 
-let auth_engine = Authkestra::builder()
-    .provider(OAuth2Flow::new(github_provider))
-    .session_store(session_store)
-    .build();`;
+let app = Router::new()
+    .route("/auth/login/github", get(authkestra_login))
+    .route("/auth/callback/github", get(authkestra_callback))
+    .with_authkestra(engine);`,
+  },
+  {
+    id: 'tab-passkeys',
+    label: 'Passkeys & Step-Up Re-Proof',
+    title: 'FIDO2 Passkeys with Re-Proof Gating',
+    lead: 'Phishing-resistant WebAuthn authentication with mandatory re-proof checks. Enrolling a new authenticator requires proving an existing factor first, stopping session hijacking attacks cold.',
+    docsHref: 'https://docs.authkestra.com/providers/passkeys/',
+    docsText: 'Read the Passkeys guide',
+    cargo: `authkestra = { version = "0.13", features = ["axum", "memory", "passkeys"] }`,
+    rust: `use authkestra::core::{Authkestra, ReproofRequirement};
+use authkestra::passkeys::{WebAuthnAuthMethod, WebAuthnConfig};
 
-/*
-  Highlighted at build time from the design tokens rather than a highlighter's
-  own theme — see lib/rust-highlight.ts for why this is hand-rolled. The
-  Cargo.toml line is run through the same pass: it is not Rust, but a TOML
-  dependency line is close enough in shape that keys, strings and brackets all
-  land on the right tokens.
-*/
-const cargoHtml = highlightRustLine(cargo);
-const rustHtml = highlightRust(rust);
+let passkeys = WebAuthnAuthMethod::new(WebAuthnConfig::new(
+    "authkestra.com",
+    "https://authkestra.com",
+)?);
+
+// Re-proof enrolment gating prevents session-hijack escalation
+let challenge = passkeys.start_register(
+    &caller_identity,
+    &ReproofRequirement::FreshPasskey,
+).await?;`,
+  },
+  {
+    id: 'tab-mcp',
+    label: 'MCP Server Agent Guard',
+    title: 'Model Context Protocol tool security',
+    lead: 'Intercept MCP JSON-RPC requests across 3 security tiers. High-stakes tools require cryptographic parameter binding (RFC 8785 JCS) and human biometric approval before execution.',
+    docsHref: 'https://docs.authkestra.com/guides/ai-agents/',
+    docsText: 'Read the AI Agent & MCP guide',
+    cargo: `authkestra = { version = "0.13", features = ["mcp", "axum", "memory"] }`,
+    rust: `use authkestra::mcp::{McpRouter, McpSecurityTier, ReproofRequirement};
+use authkestra::mcp::vault::EncryptedKvTokenVault;
+
+let mut router = McpRouter::new();
+
+// High-stakes financial execution tool requires cryptographic HITL approval
+router.register_tool(
+    "execute_transfer",
+    McpSecurityTier::HumanApproved {
+        required_scopes: vec!["payments:write".into()],
+        reproof: ReproofRequirement::FreshPasskey,
+        approval_ttl_secs: 300,
+    },
+    transfer_handler,
+);`,
+  },
+];
+
+const renderedTabs = tabs.map((tab) => ({
+  ...tab,
+  cargoHtml: highlightRustLine(tab.cargo),
+  rustHtml: highlightRust(tab.rust),
+}));
 ---
 <section id="quickstart" class="quickstart" aria-labelledby="quickstart-heading">
   <div class="inner">
-    <div class="copy">
-      <h2 id="quickstart-heading">Working GitHub login, four lines in</h2>
-      <p>
-        Add the facade crate with the features you need, then build the engine.
-        The typestate builder only lets you call <code>.build()</code> once
-        every prerequisite it needs is actually in place.
+    <div class="section-header">
+      <h2 id="quickstart-heading">Interactive Quickstart</h2>
+      <p class="lead">
+        Explore how Authkestra orchestrates authentication and agent authorization across common architectures.
+        Select a scenario to view its Cargo dependencies and compile-time safe Rust implementation:
       </p>
-      <a class="link" href="https://docs.authkestra.com/guides/quickstart/">Read the full quickstart guide</a>
     </div>
 
-    <div class="panels">
-      <figure class="panel">
-        <figcaption>Cargo.toml</figcaption>
-        <pre class="code"><code><span class="code-line" set:html={cargoHtml} /></code></pre>
-      </figure>
-      <figure class="panel">
-        <figcaption>src/main.rs</figcaption>
-        <pre class="code"><code>{rustHtml.map((line) => (
-          <span class="code-line" set:html={line || '&nbsp;'} />
-        ))}</code></pre>
-      </figure>
+    <!-- Tablist Navigation -->
+    <div class="tablist-container">
+      <div class="tablist" role="tablist" aria-label="Quickstart Scenarios">
+        {renderedTabs.map((tab, idx) => (
+          <button
+            role="tab"
+            class:list={['tab-button', { active: idx === 0 }]}
+            id={tab.id}
+            aria-selected={idx === 0 ? 'true' : 'false'}
+            aria-controls={`panel-${tab.id}`}
+            data-target={`panel-${tab.id}`}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
+    </div>
+
+    <!-- Tab Panels -->
+    <div class="tab-panels">
+      {renderedTabs.map((tab, idx) => (
+        <div
+          id={`panel-${tab.id}`}
+          role="tabpanel"
+          aria-labelledby={tab.id}
+          class:list={['tab-panel', { active: idx === 0 }]}
+        >
+          <div class="panel-layout">
+            <div class="panel-copy">
+              <h3>{tab.title}</h3>
+              <p>{tab.lead}</p>
+              <a class="docs-link" href={tab.docsHref} target="_blank" rel="noopener noreferrer">
+                <span>{tab.docsText}</span>
+                <span aria-hidden="true">→</span>
+              </a>
+            </div>
+
+            <div class="panel-code">
+              <!-- Cargo.toml snippet -->
+              <figure class="code-box">
+                <div class="code-bar">
+                  <figcaption>Cargo.toml</figcaption>
+                  <button
+                    class="code-copy-btn"
+                    data-clipboard={tab.cargo}
+                    aria-label="Copy Cargo snippet"
+                    title="Copy Cargo snippet"
+                  >
+                    <Icon name="copy" size={14} class="copy-icon" aria-hidden="true" />
+                    <Icon name="check" size={14} class="check-icon visually-hidden" aria-hidden="true" />
+                    <span class="btn-text">Copy</span>
+                  </button>
+                </div>
+                <pre class="code"><code><span class="code-line" set:html={tab.cargoHtml} /></code></pre>
+              </figure>
+
+              <!-- src/main.rs snippet -->
+              <figure class="code-box">
+                <div class="code-bar">
+                  <figcaption>src/main.rs</figcaption>
+                  <button
+                    class="code-copy-btn"
+                    data-clipboard={tab.rust}
+                    aria-label="Copy Rust snippet"
+                    title="Copy Rust snippet"
+                  >
+                    <Icon name="copy" size={14} class="copy-icon" aria-hidden="true" />
+                    <Icon name="check" size={14} class="check-icon visually-hidden" aria-hidden="true" />
+                    <span class="btn-text">Copy</span>
+                  </button>
+                </div>
+                <pre class="code"><code>{tab.rustHtml.map((line) => (
+                  <span class="code-line" set:html={line || '&nbsp;'} />
+                ))}</code></pre>
+              </figure>
+            </div>
+          </div>
+        </div>
+      ))}
     </div>
   </div>
 </section>
+
+<script>
+  // Tab switching logic
+  const tabButtons = document.querySelectorAll<HTMLButtonElement>('.tab-button');
+  const tabPanels = document.querySelectorAll<HTMLElement>('.tab-panel');
+
+  tabButtons.forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const targetId = btn.getAttribute('data-target');
+      if (!targetId) return;
+
+      tabButtons.forEach((b) => {
+        b.classList.remove('active');
+        b.setAttribute('aria-selected', 'false');
+      });
+      tabPanels.forEach((p) => {
+        p.classList.remove('active');
+      });
+
+      btn.classList.add('active');
+      btn.setAttribute('aria-selected', 'true');
+      const targetPanel = document.getElementById(targetId);
+      if (targetPanel) {
+        targetPanel.classList.add('active');
+      }
+    });
+  });
+
+  // Code copy buttons
+  const copyBtns = document.querySelectorAll<HTMLButtonElement>('.code-copy-btn');
+  copyBtns.forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      const textToCopy = btn.getAttribute('data-clipboard');
+      if (!textToCopy) return;
+
+      try {
+        await navigator.clipboard.writeText(textToCopy);
+        const copyIcon = btn.querySelector('.copy-icon');
+        const checkIcon = btn.querySelector('.check-icon');
+        const label = btn.querySelector('.btn-text');
+        if (copyIcon && checkIcon && label) {
+          copyIcon.classList.add('visually-hidden');
+          checkIcon.classList.remove('visually-hidden');
+          label.textContent = 'Copied!';
+          setTimeout(() => {
+            copyIcon.classList.remove('visually-hidden');
+            checkIcon.classList.add('visually-hidden');
+            label.textContent = 'Copy';
+          }, 2000);
+        }
+      } catch (err) {
+        console.error('Failed to copy', err);
+      }
+    });
+  });
+</script>
 
 <style>
   .quickstart {
@@ -56,82 +237,184 @@ const rustHtml = highlightRust(rust);
   }
 
   .inner {
-    display: grid;
-    grid-template-columns: minmax(0, 0.7fr) minmax(0, 1.3fr);
-    gap: var(--ak-space-10);
-    align-items: start;
+    position: relative;
   }
 
-  /* Grid items default to min-width:auto (≈ their min-content). The code
-     panel's unwrapped Rust lines would otherwise blow that min-content out
-     and stretch the whole row — including this plain-text column — wider
-     than the viewport. min-width:0 lets the track (and .code's own
-     overflow-x:auto) do the shrinking instead. */
-  .copy,
-  .panels {
-    min-width: 0;
+  .section-header {
+    max-width: 68ch;
   }
 
   h2 {
     font-size: var(--ak-text-3xl);
-    max-width: 16ch;
-  }
-
-  .copy p {
-    margin-top: var(--ak-space-4);
-    color: hsl(var(--muted-foreground));
-    max-width: 42ch;
-  }
-
-  .copy code {
-    background: hsl(var(--ak-neutral-800));
-    padding: 0.1em 0.4em;
-    border-radius: var(--ak-radius-sm);
-    font-size: 0.9em;
+    letter-spacing: var(--ak-tracking-tight);
     color: hsl(var(--foreground));
   }
 
-  .link {
-    display: inline-block;
+  .lead {
+    margin-top: var(--ak-space-4);
+    font-size: var(--ak-text-lg);
+    line-height: var(--ak-leading-relaxed);
+    color: hsl(var(--muted-foreground));
+  }
+
+  /* Tablist Header */
+  .tablist-container {
+    margin-top: var(--ak-space-10);
+    border-bottom: 1px solid hsl(var(--border));
+    overflow-x: auto;
+  }
+
+  .tablist {
+    display: flex;
+    gap: var(--ak-space-2);
+    min-width: max-content;
+  }
+
+  .tab-button {
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid transparent;
+    padding: var(--ak-space-3) var(--ak-space-5);
+    font-size: var(--ak-text-sm);
+    font-weight: 500;
+    color: hsl(var(--muted-foreground));
+    cursor: pointer;
+    transition: all var(--ak-duration-fast) var(--ak-ease-out);
+  }
+
+  .tab-button:hover {
+    color: hsl(var(--foreground));
+  }
+
+  .tab-button.active {
+    color: hsl(var(--primary-accent));
+    border-bottom-color: hsl(var(--primary-accent));
+  }
+
+  /* Tab Panels */
+  .tab-panels {
+    margin-top: var(--ak-space-8);
+  }
+
+  .tab-panel {
+    display: none;
+  }
+
+  .tab-panel.active {
+    display: block;
+  }
+
+  .panel-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 0.75fr) minmax(0, 1.25fr);
+    gap: var(--ak-space-10);
+    align-items: start;
+  }
+
+  .panel-copy,
+  .panel-code {
+    min-width: 0;
+  }
+
+  .panel-copy h3 {
+    font-size: var(--ak-text-xl);
+    font-weight: 600;
+    color: hsl(var(--foreground));
+  }
+
+  .panel-copy p {
+    margin-top: var(--ak-space-4);
+    font-size: var(--ak-text-base);
+    color: hsl(var(--muted-foreground));
+    line-height: var(--ak-leading-relaxed);
+  }
+
+  .docs-link {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--ak-space-2);
     margin-top: var(--ak-space-6);
     color: hsl(var(--primary-accent));
     font-size: var(--ak-text-sm);
     font-weight: 500;
+    text-decoration: none;
   }
 
-  .link:hover {
+  .docs-link:hover {
     text-decoration: underline;
   }
 
-  .panels {
+  /* Code Containers */
+  .panel-code {
     display: flex;
     flex-direction: column;
     gap: var(--ak-space-4);
   }
 
-  .panel {
+  .code-box {
     margin: 0;
     background: hsl(var(--card));
     border: 1px solid hsl(var(--border));
-    border-radius: var(--ak-radius-xl);
+    border-radius: var(--ak-radius-lg);
     overflow: hidden;
   }
 
-  figcaption {
-    padding: var(--ak-space-2) var(--ak-space-5);
-    font-size: var(--ak-text-xs);
-    color: hsl(var(--muted-foreground));
+  .code-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--ak-space-2) var(--ak-space-4);
+    background: hsl(var(--ak-neutral-900));
     border-bottom: 1px solid hsl(var(--border));
+  }
+
+  figcaption {
+    font-size: var(--ak-text-xs);
     font-family: var(--ak-font-mono);
+    color: hsl(var(--muted-foreground));
+  }
+
+  .code-copy-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--ak-space-1);
+    background: transparent;
+    border: 1px solid hsl(var(--border));
+    border-radius: var(--ak-radius-sm);
+    color: hsl(var(--muted-foreground));
+    padding: 2px 8px;
+    font-size: var(--ak-text-2xs);
+    font-family: var(--ak-font-sans);
+    cursor: pointer;
+    transition: all var(--ak-duration-fast) var(--ak-ease-out);
+  }
+
+  .code-copy-btn:hover {
+    color: hsl(var(--foreground));
+    border-color: hsl(var(--input));
+    background: hsl(var(--accent));
+  }
+
+  .code-copy-btn :global(.check-icon) {
+    color: hsl(var(--success-foreground));
+  }
+
+  .code {
+    margin: 0;
+    padding: var(--ak-space-4);
+    font-family: var(--ak-font-mono);
+    font-size: var(--ak-text-sm);
+    line-height: var(--ak-leading-relaxed);
+    overflow-x: auto;
+    white-space: pre;
+    background: hsl(var(--card));
   }
 
   .code-line {
     display: block;
     color: hsl(var(--code-plain));
-    white-space: pre;
   }
 
-  /* Same token mapping as the flow panel; see DESIGN.md §7. */
   .code-line :global(.t-keyword) { color: hsl(var(--code-keyword)); }
   .code-line :global(.t-type) { color: hsl(var(--code-type)); }
   .code-line :global(.t-literal) { color: hsl(var(--code-literal)); }
@@ -139,23 +422,9 @@ const rustHtml = highlightRust(rust);
   .code-line :global(.t-comment) { color: hsl(var(--code-comment)); font-style: italic; }
   .code-line :global(.t-fn) { color: hsl(var(--code-fn)); }
 
-  .code {
-    margin: 0;
-    padding: var(--ak-space-5);
-    font-family: var(--ak-font-mono);
-    font-size: var(--ak-text-sm);
-    line-height: var(--ak-leading-relaxed);
-    color: hsl(var(--muted-foreground));
-    overflow-x: auto;
-    white-space: pre;
-  }
-
   @media (max-width: 900px) {
-    .inner {
+    .panel-layout {
       grid-template-columns: 1fr;
-    }
-    h2, .copy p {
-      max-width: none;
     }
   }
 

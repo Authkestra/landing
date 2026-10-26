@@ -110,6 +110,87 @@ export const ICONS: Record<string, string> = {
     <path d="M18 6 6 18" />
     <path d="m6 6 12 12" />
   `,
+  bot: `
+    <path d="M12 8V4H8" />
+    <rect width="16" height="12" x="4" y="8" rx="2" />
+    <path d="M2 14h2" />
+    <path d="M20 14h2" />
+    <path d="M15 13v2" />
+    <path d="M9 13v2" />
+  `,
+  lock: `
+    <rect width="18" height="11" x="3" y="11" rx="2" ry="2" />
+    <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+  `,
+  copy: `
+    <rect width="14" height="14" x="8" y="8" rx="2" ry="2" />
+    <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" />
+  `,
+  check: `
+    <path d="M20 6 9 17l-5-5" />
+  `,
+  "chevron-down": `
+    <path d="m6 9 6 6 6-6" />
+  `,
+  terminal: `
+    <polyline points="4 17 10 11 4 5" />
+    <line x1="12" x2="20" y1="19" y2="19" />
+  `,
+  database: `
+    <ellipse cx="12" cy="5" rx="9" ry="3" />
+    <path d="M3 5V19A9 3 0 0 0 21 19V5" />
+    <path d="M3 12A9 3 0 0 0 21 12" />
+  `,
+  sparkles: `
+    <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z" />
+    <path d="M5 3v4" />
+    <path d="M19 17v4" />
+    <path d="M3 5h4" />
+    <path d="M17 19h4" />
+  `,
+  cpu: `
+    <rect width="16" height="16" x="4" y="4" rx="2" />
+    <rect width="6" height="6" x="9" y="9" rx="1" />
+    <path d="M15 2v2" />
+    <path d="M15 20v2" />
+    <path d="M2 15h2" />
+    <path d="M2 9h2" />
+    <path d="M20 15h2" />
+    <path d="M20 9h2" />
+    <path d="M9 2v2" />
+    <path d="M9 20v2" />
+  `,
+  layers: `
+    <path d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z" />
+    <path d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65" />
+    <path d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65" />
+  `,
+  key: `
+    <circle cx="7.5" cy="15.5" r="5.5" />
+    <path d="m21 2-9.6 9.6" />
+    <path d="m15.5 7.5 3 3L22 7l-3-3" />
+  `,
+  "shield-alert": `
+    <path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z" />
+    <path d="M12 8v4" />
+    <path d="M12 16h.01" />
+  `,
+  zap: `
+    <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+  `,
+  radio: `
+    <path d="M4.9 19.1C1 15.2 1 8.8 4.9 4.9" />
+    <path d="M7.8 16.2c-2.3-2.3-2.3-6.1 0-8.5" />
+    <circle cx="12" cy="12" r="2" />
+    <path d="M16.2 7.8c2.3 2.3 2.3 6.1 0 8.5" />
+    <path d="M19.1 4.9C23 8.8 23 15.1 19.1 19" />
+  `,
+  "file-code": `
+    <path d="M10 12.5 8 15l2 2.5" />
+    <path d="m14 12.5 2 2.5-2 2.5" />
+    <path d="M14 2v4a2 2 0 0 0 2 2h4" />
+    <path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7z" />
+  `,
 };
 
 // Brand mark — filled, not stroked. Source: Simple Icons (CC0-1.0).

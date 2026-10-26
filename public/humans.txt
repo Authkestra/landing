@@ -1,0 +1,9 @@
+/* TEAM */
+Creator: Authkestra Contributors
+Site: https://authkestra.com
+GitHub: https://github.com/Authkestra
+
+/* SITE */
+Standards: HTML5, CSS3, JSON-LD, W3C WebAuthn L3, RFC 8785 JCS, RFC 9728
+Components: Astro, JetBrains Mono, Inter
+Software: Authkestra (Pure Rust Identity & AI Agent Authorization Engine)

@@ -1,0 +1,394 @@
+---
+import Icon from './Icon.astro';
+
+const tiers = [
+  {
+    tier: 'Tier 1',
+    name: 'Public',
+    badge: 'Open / Context-Aware',
+    icon: 'circle-check',
+    desc: 'Callable without authentication or with optional caller identity context. Ideal for read-only queries, system capabilities, and public documentation searches.',
+    features: [
+      'Zero credential overhead for safe tools',
+      'Optional caller identity injection',
+      'Rate-limiting and telemetry ready',
+    ],
+  },
+  {
+    tier: 'Tier 2',
+    name: 'Scoped Resource Guard',
+    badge: 'OAuth 2.1 & RFC 9728',
+    icon: 'shield-check',
+    desc: 'Requires a valid bearer or RFC 9449 DPoP token verified via authkestra-resource. Missing or insufficient scopes trigger RFC 9728 resource metadata elicitation.',
+    features: [
+      'RFC 9728 /.well-known/oauth-protected-resource',
+      'DPoP (RFC 9449) & mTLS (RFC 8705) sender binding',
+      'Automatic 401 WWW-Authenticate challenge elicitation',
+    ],
+  },
+  {
+    tier: 'Tier 3',
+    name: 'HumanApproved (HITL Step-Up)',
+    badge: 'RFC 8785 JCS & Biometrics',
+    icon: 'key',
+    desc: 'Mandates cryptographic human approval bound to canonicalized tool parameters. Prevents unauthorized financial transfers, deletions, or external API execution.',
+    features: [
+      'RFC 8785 JSON Canonicalization Scheme (JCS)',
+      'Deterministic SHA-256 challenge digest binding',
+      'Physical WebAuthn Passkey / TOTP re-proof',
+      'Atomic single-use token consumption (AtomicConsume)',
+      'Deterministic parameter tampering rejection',
+    ],
+  },
+];
+---
+<section id="ai-agents-mcp" class="ai-mcp" aria-labelledby="ai-mcp-heading">
+  <div class="inner">
+    <div class="header">
+      <div class="pill">
+        <Icon name="bot" size={16} class="pill-icon" aria-hidden="true" />
+        <span>authkestra-mcp</span>
+      </div>
+      <h2 id="ai-mcp-heading">AI Agent &amp; Model Context Protocol (MCP) Security</h2>
+      <p class="lead">
+        Autonomous AI agents need access to tools, but giving LLMs unrestricted execution rights
+        or raw API keys is an existential security risk. <code>authkestra-mcp</code> intercepts MCP
+        JSON-RPC requests with three composable security tiers, cryptographic parameter binding,
+        and zero-trust credential isolation.
+      </p>
+    </div>
+
+    <!-- 3-Tier Grid -->
+    <div class="tiers-grid">
+      {tiers.map((t) => (
+        <div class="tier-card">
+          <div class="tier-header">
+            <span class="tier-num">{t.tier}</span>
+            <span class="tier-badge">{t.badge}</span>
+          </div>
+          <div class="tier-title-row">
+            <div class="tier-icon-wrap">
+              <Icon name={t.icon} size={20} class="tier-icon" aria-hidden="true" />
+            </div>
+            <h3>{t.name}</h3>
+          </div>
+          <p class="tier-desc">{t.desc}</p>
+          <ul class="tier-features">
+            {t.features.map((f) => (
+              <li>
+                <Icon name="check" size={14} class="feature-check" aria-hidden="true" />
+                <span>{f}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ))}
+    </div>
+
+    <!-- Deep Dive Architecture: JCS Parameter Tamper & Token Vault -->
+    <div class="architecture-grid">
+      <div class="arch-card">
+        <div class="arch-icon-wrap">
+          <Icon name="shield-alert" size={24} class="arch-icon" aria-hidden="true" />
+        </div>
+        <h3>Cryptographic JCS Parameter Tampering Defense</h3>
+        <p>
+          Prompt injections and model hallucinations can cause agents to alter critical arguments
+          after receiving user approval. Authkestra solves this with strict <strong>RFC 8785 JSON
+          Canonicalization Scheme (JCS)</strong>:
+        </p>
+        <div class="formula-box">
+          <code>SHA-256(session_id ‖ tool_name ‖ JCS(args) ‖ expires_at)</code>
+        </div>
+        <p>
+          If an adversary or model mutates even a single character, key ordering, or numeric value
+          (e.g., <code>amount: 50</code> to <code>amount: 5000</code>) between approval and invocation,
+          the challenge digest check fails instantly, aborting execution.
+        </p>
+      </div>
+
+      <div class="arch-card">
+        <div class="arch-icon-wrap">
+          <Icon name="lock" size={24} class="arch-icon" aria-hidden="true" />
+        </div>
+        <h3>Zero-Trust Downstream Token Vault</h3>
+        <p>
+          Never expose raw OAuth2 refresh tokens, client secrets, or API keys inside the LLM prompt
+          context. With <code>DownstreamTokenBroker</code> and <code>EncryptedKvTokenVault</code>:
+        </p>
+        <ul class="arch-list">
+          <li>Tokens are encrypted at rest with AES-256-GCM via <code>authkestra-crypto-util</code>.</li>
+          <li>Tool handlers receive an isolated <code>ToolContext</code> scoped to the verified caller.</li>
+          <li>Downstream API requests resolve short-lived bearer tokens just-in-time on the server.</li>
+        </ul>
+      </div>
+
+      <div class="arch-card">
+        <div class="arch-icon-wrap">
+          <Icon name="square-function" size={24} class="arch-icon" aria-hidden="true" />
+        </div>
+        <h3>AI-Proof Typestate Builder</h3>
+        <p>
+          When AI coding assistants generate authentication code, they frequently omit session
+          stores, skip token validation, or forget CSRF middleware. Authkestra's Rust typestate
+          pattern <code>Engine&lt;S, T&gt;</code> encodes security prerequisites into the compiler:
+        </p>
+        <div class="code-quote">
+          <code>let engine = Authkestra::builder() /* Won't compile until complete */</code>
+        </div>
+        <p>
+          Any incomplete configuration causes a clear compile-time error, preventing LLM hallucinations
+          from reaching production.
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  .ai-mcp {
+    max-width: var(--ak-layout-max);
+    margin: 0 auto;
+    padding: var(--ak-space-24) var(--ak-space-6);
+  }
+
+  .inner {
+    position: relative;
+  }
+
+  .header {
+    max-width: 72ch;
+  }
+
+  .pill {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--ak-space-2);
+    padding: var(--ak-space-1) var(--ak-space-3);
+    border-radius: var(--ak-radius-full);
+    background: hsl(var(--card));
+    border: 1px solid hsl(var(--border));
+    font-size: var(--ak-text-xs);
+    font-family: var(--ak-font-mono);
+    color: hsl(var(--primary-accent));
+    margin-bottom: var(--ak-space-4);
+  }
+
+  .pill-icon {
+    color: hsl(var(--primary-accent));
+  }
+
+  h2 {
+    font-size: var(--ak-text-3xl);
+    letter-spacing: var(--ak-tracking-tight);
+    color: hsl(var(--foreground));
+  }
+
+  .lead {
+    margin-top: var(--ak-space-4);
+    font-size: var(--ak-text-lg);
+    line-height: var(--ak-leading-relaxed);
+    color: hsl(var(--muted-foreground));
+  }
+
+  /* Tiers Grid */
+  .tiers-grid {
+    margin-top: var(--ak-space-12);
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--ak-space-6);
+  }
+
+  .tier-card {
+    background: hsl(var(--card));
+    border: 1px solid hsl(var(--border));
+    border-radius: var(--radius);
+    padding: var(--ak-space-6);
+    display: flex;
+    flex-direction: column;
+    transition: border-color var(--ak-duration-fast) var(--ak-ease-out);
+  }
+
+  .tier-card:hover {
+    border-color: hsl(var(--input));
+  }
+
+  .tier-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: var(--ak-space-4);
+  }
+
+  .tier-num {
+    font-size: var(--ak-text-xs);
+    font-family: var(--ak-font-mono);
+    font-weight: 600;
+    color: hsl(var(--primary-accent));
+    text-transform: uppercase;
+    letter-spacing: var(--ak-tracking-wide);
+  }
+
+  .tier-badge {
+    font-size: var(--ak-text-2xs);
+    background: hsl(var(--ak-neutral-800));
+    color: hsl(var(--ak-neutral-300));
+    padding: 2px 8px;
+    border-radius: var(--ak-radius-sm);
+    font-family: var(--ak-font-mono);
+  }
+
+  .tier-title-row {
+    display: flex;
+    align-items: center;
+    gap: var(--ak-space-3);
+    margin-bottom: var(--ak-space-3);
+  }
+
+  .tier-icon-wrap {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: var(--ak-radius-sm);
+    background: hsl(var(--ak-neutral-800));
+    color: hsl(var(--primary-accent));
+    flex-shrink: 0;
+  }
+
+  .tier-card h3 {
+    font-size: var(--ak-text-base);
+    font-weight: 600;
+    color: hsl(var(--foreground));
+  }
+
+  .tier-desc {
+    font-size: var(--ak-text-sm);
+    color: hsl(var(--muted-foreground));
+    line-height: var(--ak-leading-normal);
+    margin-bottom: var(--ak-space-5);
+  }
+
+  .tier-features {
+    margin-top: auto;
+    padding-top: var(--ak-space-4);
+    border-top: 1px solid hsl(var(--border));
+    display: flex;
+    flex-direction: column;
+    gap: var(--ak-space-2);
+  }
+
+  .tier-features li {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--ak-space-2);
+    font-size: var(--ak-text-xs);
+    color: hsl(var(--ak-neutral-300));
+    line-height: var(--ak-leading-snug);
+  }
+
+  .feature-check {
+    color: hsl(var(--success-foreground));
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+
+  /* Architecture Sub-Grid */
+  .architecture-grid {
+    margin-top: var(--ak-space-12);
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--ak-space-6);
+  }
+
+  .arch-card {
+    background: hsl(var(--card) / 0.6);
+    border: 1px solid hsl(var(--border));
+    border-radius: var(--radius);
+    padding: var(--ak-space-6);
+  }
+
+  .arch-icon-wrap {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: var(--ak-radius-md);
+    background: hsl(var(--ak-neutral-800));
+    color: hsl(var(--primary-accent));
+    margin-bottom: var(--ak-space-4);
+  }
+
+  .arch-card h3 {
+    font-size: var(--ak-text-base);
+    font-weight: 600;
+    color: hsl(var(--foreground));
+    margin-bottom: var(--ak-space-3);
+  }
+
+  .arch-card p {
+    font-size: var(--ak-text-sm);
+    color: hsl(var(--muted-foreground));
+    line-height: var(--ak-leading-relaxed);
+  }
+
+  .formula-box {
+    margin: var(--ak-space-4) 0;
+    padding: var(--ak-space-3);
+    background: hsl(var(--ak-neutral-900));
+    border: 1px solid hsl(var(--border));
+    border-radius: var(--ak-radius-sm);
+    font-family: var(--ak-font-mono);
+    font-size: var(--ak-text-xs);
+    color: hsl(var(--primary-accent));
+    word-break: break-all;
+  }
+
+  .code-quote {
+    margin: var(--ak-space-4) 0;
+    padding: var(--ak-space-3);
+    background: hsl(var(--ak-neutral-900));
+    border: 1px solid hsl(var(--border));
+    border-radius: var(--ak-radius-sm);
+    font-family: var(--ak-font-mono);
+    font-size: var(--ak-text-xs);
+    color: hsl(var(--ak-amber-400));
+  }
+
+  .arch-list {
+    margin-top: var(--ak-space-4);
+    display: flex;
+    flex-direction: column;
+    gap: var(--ak-space-2);
+  }
+
+  .arch-list li {
+    font-size: var(--ak-text-xs);
+    color: hsl(var(--muted-foreground));
+    line-height: var(--ak-leading-normal);
+    position: relative;
+    padding-left: var(--ak-space-3);
+  }
+
+  .arch-list li::before {
+    content: "•";
+    position: absolute;
+    left: 0;
+    color: hsl(var(--primary-accent));
+  }
+
+  @media (max-width: 960px) {
+    .tiers-grid,
+    .architecture-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  @media (max-width: 600px) {
+    .ai-mcp {
+      padding: var(--ak-space-16) var(--ak-space-4);
+    }
+  }
+</style>

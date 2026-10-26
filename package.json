@@ -8,6 +8,8 @@
     "start": "astro dev",
     "build": "astro build",
     "preview": "astro preview",
+    "test": "node scripts/verify-landing.mjs",
+    "verify": "node scripts/verify-landing.mjs",
     "astro": "astro"
   },
   "dependencies": {

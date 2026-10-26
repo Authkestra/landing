@@ -2,7 +2,7 @@ import type { APIRoute } from 'astro';
 
 const LLMS_TXT = `# Authkestra (v0.13)
 
-> Authkestra is a modular, framework-agnostic authentication and authorization orchestration engine for Rust. It combines an OAuth2/OIDC client, stateless/stateful session orchestrator, passwordless & MFA engine (Passkeys/WebAuthn, TOTP, Magic Links, Email/SMS OTP, Recovery Codes, Re-proof gating), Resource Server (JWT/JWKS/DPoP/mTLS), OpenID Connect Provider (OP with RFC 8693 Token Exchange & Device Flow), Device-Bound Signatures (\`authkestra-devsig\`), AWS Cedar Policy Engine (\`authkestra-policy\`), and OpenID Shared Signals / CAEP receiver (\`authkestra-ssf\`) behind a compile-time safe Typestate Builder (\`Authkestra::builder()\`).
+> Authkestra is a modular, framework-agnostic authentication and authorization orchestration engine for Rust. It combines an OAuth2/OIDC client, stateless/stateful session orchestrator, passwordless & MFA engine (Passkeys/WebAuthn, TOTP, Magic Links, Email/SMS OTP, Recovery Codes, Re-proof gating), Resource Server (JWT/JWKS/DPoP/mTLS), OpenID Connect Provider (OP with RFC 8693 Token Exchange & Device Flow), Model Context Protocol (MCP) tool security (\`authkestra-mcp\`), Device-Bound Signatures (\`authkestra-devsig\`), AWS Cedar Policy Engine (\`authkestra-policy\`), and OpenID Shared Signals / CAEP receiver (\`authkestra-ssf\`) behind a compile-time safe Typestate Builder (\`Authkestra::builder()\`).
 
 ## Critical Rules for AI Coding Assistants
 
@@ -14,6 +14,7 @@ const LLMS_TXT = `# Authkestra (v0.13)
 - **Stateless OAuth**: OAuth \`state\` and \`nonce\` live in encrypted cookies, never in the database.
 - **No User Table**: Authkestra deliberately has no \`UserStore\` trait. Your application owns user/account records; Authkestra provides traits for protocol state (\`KvStore\`, \`SessionStore\`, \`CredentialStore\`, \`OpStore\`).
 - **Re-Proof Gated Enrolment (\`0.13+\`)**: \`TotpAuthMethod::register_totp\`, \`WebAuthnAuthMethod::start_register\`, and \`RecoveryCodeAuthMethod::generate\` require \`(&Identity, &ReproofRequirement, ...)\` rather than a bare \`user_id: &str\` to prevent confused-deputy and stale-session escalation attacks.
+- **AI Agent & MCP Tool Security (\`authkestra-mcp\`)**: Enable via \`features = ["mcp"]\`. Intercepts Model Context Protocol JSON-RPC requests across 3 composable security tiers (\`Public\`, \`Scoped\`, \`HumanApproved\`). High-stakes tools require RFC 8785 JSON Canonicalization Scheme (JCS) parameter digest verification and physical Passkey re-proof. Stored downstream credentials are isolated via \`DownstreamTokenBroker\` and \`EncryptedKvTokenVault\` (AES-256-GCM) so LLM prompts never see raw secrets.
 
 ## Full Documentation Corpus
 
@@ -29,6 +30,24 @@ const LLMS_TXT = `# Authkestra (v0.13)
 - [Framework Integration](https://docs.authkestra.com/guides/framework-integration/): \`AuthSession\`, \`AuthToken\`, \`AxumExt\`, \`AxumStatelessExt\`, \`ActixExt\`, and \`ActixStatelessExt\`.
 - [Wired Endpoints](https://docs.authkestra.com/guides/wired-endpoints/): Automatic vs. manual route wiring for \`/auth/login/{provider}\`, \`/auth/callback/{provider}\`, and \`/auth/logout\`.
 - [AI Coding Assistants & Agent Auth](https://docs.authkestra.com/guides/ai-agents/): Using \`llms.txt\`, \`Authkestra/skills\`, and securing AI agents & MCP servers.
+
+## AI Agents & Model Context Protocol (authkestra-mcp)
+
+- **Crate & Feature Flag**: \`authkestra-mcp\` is exposed behind the \`mcp\` feature on \`authkestra\`, \`authkestra-axum\`, and \`authkestra-actix\`.
+- **Three Composable Security Tiers (\`McpSecurityTier\`)**:
+  - \`Public\`: Callable without credentials or with optional caller identity context.
+  - \`Scoped { required_scopes: Vec<String> }\`: Requires a valid Bearer or RFC 9449 DPoP token verified via \`authkestra-resource\`. Returns RFC 9728 \`WWW-Authenticate: Bearer resource_metadata=".../.well-known/oauth-protected-resource"\` on 401 Unauthorized and \`insufficient_scope\` on 403 Forbidden.
+  - \`HumanApproved { required_scopes: Vec<String>, reproof: ReproofRequirement, approval_ttl_secs: u64 }\`: Requires scope validation plus single-use cryptographic step-up approval bound to the exact tool name and canonicalized arguments.
+- **Cryptographic Parameter Binding (RFC 8785 JCS)**:
+  - Deterministic SHA-256 challenge digest: \`SHA-256(session_id ‖ tool_name ‖ JCS(args) ‖ expires_at)\`.
+  - When an unapproved \`HumanApproved\` tool call arrives, persists the pending approval in \`KvStore\` and returns structured step-up challenge elicitation (\`approval_id\`, \`challenge_digest\`).
+  - Human approves via fresh WebAuthn Passkey or TOTP proof, minting a single-use execution token consumed atomically via \`AtomicConsume\`.
+  - Modifying any parameter between approval and execution fails with a deterministic parameter mismatch error.
+- **Zero-Trust Downstream Token Vault**:
+  - \`DownstreamTokenBroker\` trait and \`EncryptedKvTokenVault\` implementation encrypt stored tokens at rest in \`KvStore\` using AES-256-GCM via \`authkestra-crypto-util\`.
+  - Tool handlers receive an isolated \`ToolContext\` that resolves scoped downstream API tokens on behalf of the caller's \`Identity\` without exposing refresh tokens or raw credentials in the LLM context window.
+- **Server Adapters & Protected Resource Metadata**:
+  - Full router integration in \`authkestra-axum\` and \`authkestra-actix\` exposing MCP JSON-RPC routes, \`/.well-known/oauth-protected-resource\` metadata, and step-up verification handlers.
 
 ## Authentication Flows
 

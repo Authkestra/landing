@@ -1,0 +1,11 @@
+# robots.txt for https://authkestra.com
+User-agent: *
+Allow: /
+
+# Sitemaps
+Sitemap: https://authkestra.com/sitemap.xml
+
+# LLM & AI Discoverability
+# Machine-readable overview and context for AI coding assistants
+# llms.txt: https://authkestra.com/llms.txt
+# llms-full.txt: https://docs.authkestra.com/llms-full.txt

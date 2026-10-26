@@ -1,0 +1,182 @@
+---
+import Icon from './Icon.astro';
+
+const faqs = [
+  {
+    q: 'Why an embedded identity engine rather than a standalone sidecar IdP (Keycloak, Ory, Zitadel)?',
+    a: 'A standalone identity server adds extra microservice deployment overhead, database backups, network latency, and operational complexity. Authkestra embeds directly into your Rust binary as a compile-time safe library, giving you a full OpenID Provider, OAuth2 client, Resource Server, and Passkey engine in-process with zero network hops or dedicated databases.',
+  },
+  {
+    q: 'How does Stateless OAuth work without storing sessions in a database?',
+    a: 'Authkestra encapsulates OAuth2 authorization state and PKCE code verifiers inside AES-256-GCM encrypted, authenticated cookies (__Host-authkestra_state). The browser holds the encrypted state during the OAuth redirect dance. Upon callback, the engine verifies the authentication tag and decrypts the state in memory, allowing your application to scale horizontally across servers without a shared Redis or SQL session store.',
+  },
+  {
+    q: 'What is Re-Proof Gating and how does it prevent session escalation?',
+    a: 'In many web applications, an attacker who steals an active session cookie can immediately register a new passkey or TOTP authenticator to lock out the genuine owner. Authkestra enforces Re-Proof Gating: registering high-stakes authenticators requires verifying an existing primary factor (ReproofRequirement::FreshPasskey or ReproofRequirement::FreshPassword) within a strict time window, closing the session-hijack-then-enrol vulnerability.',
+  },
+  {
+    q: 'How does authkestra-mcp secure AI agents and Model Context Protocol servers?',
+    a: 'authkestra-mcp provides a 3-tier security architecture for MCP JSON-RPC tools: Tier 1 (Public) for unauthenticated queries; Tier 2 (Scoped) requiring OAuth 2.1 bearer tokens with RFC 9728 discovery and DPoP binding; and Tier 3 (HumanApproved) requiring cryptographic step-up approval. Furthermore, the DownstreamTokenBroker safely resolves third-party API credentials without exposing refresh tokens or long-lived secrets in the LLM context window.',
+  },
+  {
+    q: 'How does Authkestra prevent AI agents from tampering with approved tool parameters?',
+    a: 'When a tool requires Human-in-the-Loop step-up approval, Authkestra applies RFC 8785 JSON Canonicalization Scheme (JCS) to the tool\'s arguments and computes a deterministic SHA-256 challenge digest over (session_id, tool_name, jcs_arguments, expires_at). If an AI agent or malicious actor alters even a single parameter value or order before execution, the cryptographic digest check fails, rejecting execution with a parameter mismatch error.',
+  },
+  {
+    q: 'Can I use Authkestra with any database or web framework?',
+    a: 'Yes. Authkestra\'s engine core is pure Rust logic with zero framework dependencies. First-party adapters exist for Axum (authkestra-axum) and Actix-web (authkestra-actix). Persistence is defined via traits (KvStore, SessionStore, CredentialStore, OpStore). We provide built-in in-memory, Redis, and SQL (PostgreSQL, MySQL, SQLite) implementations, or you can implement the traits for your custom data store.',
+  },
+  {
+    q: 'How do AI coding assistants discover Authkestra APIs via llms.txt and Claude skills?',
+    a: 'Authkestra publishes machine-readable API summaries at https://authkestra.com/llms.txt and comprehensive documentation at https://docs.authkestra.com/llms-full.txt. Additionally, the official Authkestra/skills repository provides structured Claude Code / agent skills that teach AI assistants exact typestate builder constraints, Cargo feature flags, and store implementations.',
+  },
+];
+---
+<section id="faq" class="faq" aria-labelledby="faq-heading">
+  <div class="inner">
+    <div class="header">
+      <h2 id="faq-heading">Frequently Asked Questions</h2>
+      <p class="lead">
+        Answers to architectural, cryptographic, and operational questions about Authkestra
+        and AI agent tool security.
+      </p>
+    </div>
+
+    <div class="faq-list">
+      {faqs.map((item, idx) => (
+        <details class="faq-item" open={idx === 0}>
+          <summary class="faq-summary">
+            <h3>{item.q}</h3>
+            <div class="chevron-wrap">
+              <Icon name="chevron-down" size={18} class="chevron" aria-hidden="true" />
+            </div>
+          </summary>
+          <div class="faq-answer">
+            <p>{item.a}</p>
+          </div>
+        </details>
+      ))}
+    </div>
+  </div>
+</section>
+
+<style>
+  .faq {
+    max-width: var(--ak-layout-max);
+    margin: 0 auto;
+    padding: var(--ak-space-24) var(--ak-space-6);
+  }
+
+  .inner {
+    max-width: 860px;
+    margin: 0 auto;
+  }
+
+  .header {
+    text-align: center;
+    margin-bottom: var(--ak-space-12);
+  }
+
+  h2 {
+    font-size: var(--ak-text-3xl);
+    letter-spacing: var(--ak-tracking-tight);
+    color: hsl(var(--foreground));
+  }
+
+  .lead {
+    margin-top: var(--ak-space-4);
+    font-size: var(--ak-text-lg);
+    line-height: var(--ak-leading-relaxed);
+    color: hsl(var(--muted-foreground));
+  }
+
+  .faq-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ak-space-4);
+  }
+
+  .faq-item {
+    background: hsl(var(--card));
+    border: 1px solid hsl(var(--border));
+    border-radius: var(--radius);
+    overflow: hidden;
+    transition: border-color var(--ak-duration-fast) var(--ak-ease-out);
+  }
+
+  .faq-item:hover {
+    border-color: hsl(var(--input));
+  }
+
+  .faq-item[open] {
+    border-color: hsl(var(--input));
+  }
+
+  .faq-summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--ak-space-4);
+    padding: var(--ak-space-5) var(--ak-space-6);
+    cursor: pointer;
+    list-style: none;
+    user-select: none;
+  }
+
+  .faq-summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .faq-summary h3 {
+    font-size: var(--ak-text-base);
+    font-weight: 600;
+    color: hsl(var(--foreground));
+    margin: 0;
+    line-height: var(--ak-leading-snug);
+  }
+
+  .chevron-wrap {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: var(--ak-radius-sm);
+    background: hsl(var(--ak-neutral-800));
+    color: hsl(var(--muted-foreground));
+    transition: transform var(--ak-duration-fast) var(--ak-ease-out), color var(--ak-duration-fast) var(--ak-ease-out);
+  }
+
+  .faq-summary:hover .chevron-wrap {
+    color: hsl(var(--primary-accent));
+  }
+
+  .faq-item[open] .chevron-wrap {
+    transform: rotate(180deg);
+    color: hsl(var(--primary-accent));
+  }
+
+  .faq-answer {
+    padding: 0 var(--ak-space-6) var(--ak-space-6);
+  }
+
+  .faq-answer p {
+    font-size: var(--ak-text-sm);
+    line-height: var(--ak-leading-relaxed);
+    color: hsl(var(--muted-foreground));
+    margin: 0;
+  }
+
+  @media (max-width: 600px) {
+    .faq {
+      padding: var(--ak-space-16) var(--ak-space-4);
+    }
+    .faq-summary {
+      padding: var(--ak-space-4);
+    }
+    .faq-answer {
+      padding: 0 var(--ak-space-4) var(--ak-space-4);
+    }
+  }
+</style>

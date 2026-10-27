@@ -1,139 +1,49 @@
 ---
 import Icon from './Icon.astro';
-
-const guarantees = [
-  { title: 'Stores & keys wired', note: 'Missing session store? It fails at cargo check, not in production.' },
-  { title: 'Agent tools guarded', note: 'Three MCP security tiers, up to passkey-approved execution.' },
-  { title: 'Arguments locked', note: 'Approved tool parameters cannot change before they run.' },
-  { title: 'Secrets stay server-side', note: 'API tokens never enter the model context.' },
-];
-
-const pillars = [
-  {
-    icon: 'bot',
-    tag: 'authkestra-mcp',
-    label: 'AI Agent & MCP Tool Guard',
-    desc: 'Intercept MCP tool calls across three security tiers, lock approved arguments against tampering, and keep API secrets inside an encrypted server vault.',
-    specs: 'Parameter Binding · Passkey Step-Up · Encrypted Vault',
-    tooltip: 'Implements RFC 8785 JCS SHA-256 parameter digests, RFC 9728 resource discovery, and AES-256-GCM envelope encryption',
-  },
-  {
-    icon: 'fingerprint',
-    tag: 'authkestra-op · passkeys',
-    label: 'Embedded Identity & Passkey Engine',
-    desc: 'Run a full OpenID Connect provider, stateless OAuth 2.1 login, FIDO2 passkeys, TOTP, and magic links in-process without a dedicated sidecar cluster.',
-    specs: 'OAuth 2.1 & OIDC · WebAuthn L3 · Re-Proof Gating',
-    tooltip: 'Supports RFC 6749, RFC 8693 Token Exchange, RFC 8628 Device Flow, and FIDO2 passkey re-proof enrolment gating',
-  },
-  {
-    icon: 'shield-check',
-    tag: 'authkestra-resource · policy',
-    label: 'API Resource Server & Cedar Policy',
-    desc: 'Verify sender-bound tokens at the API edge, evaluate declarative AWS Cedar access policies in microseconds, and revoke compromised sessions in real time.',
-    specs: 'AWS Cedar ABAC · Sender-Bound Tokens · Real-Time Revocation',
-    tooltip: 'Supports RFC 9449 DPoP, RFC 8705 mTLS certificate binding, and OpenID CAEP / SSF (RFC 8935) event streams',
-  },
-];
 ---
 <section class="hero" id="top">
   <div class="grid-texture" aria-hidden="true"></div>
   <div class="inner">
-    <div class="hero-split">
-      <!-- Left Column: Positioning, CTAs, Install Command -->
-      <div class="hero-copy">
-        <div class="posture-strip" role="note" aria-label="Version and maturity status">
-          <span class="posture-badge">v0.13.1</span>
-          <span class="posture-sep" aria-hidden="true">·</span>
-          <span>MSRV 1.85</span>
-          <span class="posture-sep" aria-hidden="true">·</span>
-          <span>MIT / Apache-2.0</span>
-          <span class="posture-sep" aria-hidden="true">·</span>
-          <a href="#security-posture" class="posture-link">Pre-1.0 Security Posture →</a>
-        </div>
+    <div class="hero-copy">
+      <a href="#security-posture" class="posture">v0.13, pre-1.0. Read the security posture</a>
 
-        <h1>Your security can't be hallucinated.</h1>
-        <p class="lead">
-          The compile-time safe identity &amp; AI agent authorization engine for Rust. Embed a full OpenID Provider, passkey engine, API resource server, and MCP agent tool
-          guard directly into your Rust binary—with compile-time wiring guarantees and zero
-          external sidecars.
-        </p>
+      <h1>Your security can't be hallucinated.</h1>
+      <p class="lead">
+        An embedded identity and AI agent authorization engine for Rust. Checked at compile time,
+        with no sidecar to run.
+      </p>
 
-        <div class="ctas">
-          <a class="btn primary" href="#quickstart">Read the Quickstart</a>
-          <a class="btn secondary" href="#ai-mcp-security">Explore MCP Security</a>
-          <a class="btn ghost" href="https://play.authkestra.com" target="_blank" rel="noopener noreferrer">Playground</a>
-        </div>
-
-        <!-- Terminal Snippet -->
-        <div class="terminal-box">
-          <div class="terminal-bar">
-            <span class="dot red"></span>
-            <span class="dot yellow"></span>
-            <span class="dot green"></span>
-            <span class="terminal-title">Terminal</span>
-          </div>
-          <div class="terminal-content">
-            <span class="prompt">$</span>
-            <code class="cmd">cargo add authkestra</code>
-            <button class="copy-btn" id="hero-copy-btn" aria-label="Copy to clipboard" title="Copy to clipboard">
-              <Icon name="copy" size={16} class="copy-icon" aria-hidden="true" />
-              <Icon name="check" size={16} class="check-icon visually-hidden" aria-hidden="true" />
-              <span class="copy-label">Copy</span>
-            </button>
-          </div>
-        </div>
+      <div class="ctas">
+        <a class="btn primary" href="#quickstart">Quickstart</a>
+        <a class="btn secondary" href="https://docs.authkestra.com">Documentation</a>
+        <a class="btn ghost" href="https://play.authkestra.com" target="_blank" rel="noopener noreferrer">Playground</a>
       </div>
 
-      <!-- Right Column: Product Code & Compile-Time Verification Visual -->
-      <div class="hero-showcase" aria-label="Authkestra guarantees">
-        <div class="showcase-card">
-          <div class="showcase-bar">
-            <div class="showcase-dots" aria-hidden="true">
-              <span class="dot red"></span>
-              <span class="dot yellow"></span>
-              <span class="dot green"></span>
-            </div>
-            <span class="showcase-filename">Built-in guarantees</span>
-            <span class="showcase-tag">Axum · Actix-web</span>
-          </div>
-          <ul class="showcase-list">
-            {guarantees.map((g) => (
-              <li>
-                <Icon name="check" size={16} class="g-check" aria-hidden="true" />
-                <div>
-                  <strong>{g.title}</strong>
-                  <span>{g.note}</span>
-                </div>
-              </li>
-            ))}
-          </ul>
-          <div class="showcase-status">
-            <div class="status-ok">
-              <span class="status-dot" aria-hidden="true"></span>
-              <code>rustc: Engine&lt;Ready, Verified&gt;</code>
-            </div>
-            <span class="status-meta">No missing-store runtime panics</span>
-          </div>
-        </div>
+      <div class="install">
+        <span class="prompt" aria-hidden="true">$</span>
+        <code class="cmd">cargo add authkestra</code>
+        <button class="copy-btn" id="hero-copy-btn" aria-label="Copy install command" title="Copy install command">
+          <Icon name="copy" size={16} class="copy-icon" aria-hidden="true" />
+          <Icon name="check" size={16} class="check-icon visually-hidden" aria-hidden="true" />
+          <span class="copy-label">Copy</span>
+        </button>
       </div>
     </div>
 
-    <!-- 3-Pillar Overview Strip ("What is Authkestra") -->
-    <div class="pillars-grid" aria-label="Core architecture pillars">
-      {pillars.map((p) => (
-        <div class="pillar-card" title={p.tooltip}>
-          <div class="pillar-top">
-            <div class="pillar-icon-wrap">
-              <Icon name={p.icon} size={20} class="pillar-icon" aria-hidden="true" />
-            </div>
-            <span class="pillar-tag">{p.tag}</span>
-          </div>
-          <strong class="pillar-title">{p.label}</strong>
-          <p class="pillar-desc">{p.desc}</p>
-          <span class="pillar-specs">{p.specs}</span>
-        </div>
-      ))}
-    </div>
+    <figure class="tamper" aria-label="An agent changes an approved amount and the call is blocked">
+      <figcaption>transfer_funds</figcaption>
+      <div class="row ok">
+        <span class="who">You approved</span>
+        <span class="amount">$50</span>
+        <span class="verdict"><Icon name="check" size={16} aria-hidden="true" /> Matches</span>
+      </div>
+      <div class="link" aria-hidden="true"></div>
+      <div class="row bad">
+        <span class="who">Agent sent</span>
+        <span class="amount">$5,000</span>
+        <span class="verdict"><Icon name="shield-alert" size={16} aria-hidden="true" /> Blocked</span>
+      </div>
+    </figure>
   </div>
 </section>
 
@@ -149,7 +59,7 @@ const pillars = [
         if (copyIcon && checkIcon && label) {
           copyIcon.classList.add('visually-hidden');
           checkIcon.classList.remove('visually-hidden');
-          label.textContent = 'Copied!';
+          label.textContent = 'Copied';
           setTimeout(() => {
             copyIcon.classList.remove('visually-hidden');
             checkIcon.classList.add('visually-hidden');
@@ -175,7 +85,7 @@ const pillars = [
   .grid-texture {
     position: absolute;
     inset: -10% -10% auto -10%;
-    height: 560px;
+    height: 520px;
     background-image:
       linear-gradient(hsl(var(--border) / 0.5) 1px, transparent 1px),
       linear-gradient(90deg, hsl(var(--border) / 0.5) 1px, transparent 1px);
@@ -183,80 +93,52 @@ const pillars = [
     -webkit-mask-image: radial-gradient(ellipse 75% 65% at 50% 0%, black 40%, transparent 80%);
     mask-image: radial-gradient(ellipse 75% 65% at 50% 0%, black 40%, transparent 80%);
     pointer-events: none;
-    z-index: 0;
   }
 
   .inner {
     position: relative;
     z-index: 1;
-  }
-
-  .hero-split {
     display: grid;
-    grid-template-columns: minmax(0, 1.08fr) minmax(0, 0.92fr);
-    gap: var(--ak-space-10);
+    grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+    gap: var(--ak-space-12);
     align-items: center;
   }
 
   .hero-copy,
-  .hero-showcase {
+  .tamper {
     min-width: 0;
   }
 
-  /* Maturity & Version Strip */
-  .posture-strip {
-    display: inline-flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: var(--ak-space-2);
-    padding: 4px var(--ak-space-3);
+  .posture {
+    display: inline-block;
     margin-bottom: var(--ak-space-5);
-    border-radius: var(--ak-radius-full);
-    background: hsl(var(--card));
-    border: 1px solid hsl(var(--border));
-    font-size: var(--ak-text-xs);
-    font-family: var(--ak-font-mono);
-    color: hsl(var(--ak-neutral-300));
-  }
-
-  .posture-badge {
+    font-size: var(--ak-text-sm);
     color: hsl(var(--primary-accent));
-    font-weight: 600;
   }
 
-  .posture-sep {
-    color: hsl(var(--muted-foreground));
-  }
-
-  .posture-link {
-    color: hsl(var(--primary-accent));
-    text-decoration: none;
-    font-weight: 500;
-  }
-
-  .posture-link:hover {
+  .posture:hover {
     text-decoration: underline;
   }
 
   h1 {
-    font-size: var(--ak-text-3xl);
+    font-size: var(--ak-text-4xl);
     line-height: var(--ak-leading-tight);
     letter-spacing: var(--ak-tracking-tight);
+    max-width: 16ch;
   }
 
   .lead {
     margin-top: var(--ak-space-5);
+    max-width: 46ch;
     font-size: var(--ak-text-lg);
     line-height: var(--ak-leading-relaxed);
     color: hsl(var(--ak-neutral-300));
-    max-width: 60ch;
   }
 
   .ctas {
     margin-top: var(--ak-space-8);
     display: flex;
     flex-wrap: wrap;
-    align-items: center;
     gap: var(--ak-space-3);
   }
 
@@ -269,7 +151,6 @@ const pillars = [
     border-radius: var(--radius);
     font-size: var(--ak-text-sm);
     font-weight: 500;
-    text-decoration: none;
     transition: all var(--ak-duration-fast) var(--ak-ease-out);
   }
 
@@ -279,9 +160,7 @@ const pillars = [
     box-shadow: var(--ak-shadow-accent);
   }
 
-  .btn.primary:hover {
-    filter: brightness(1.08);
-  }
+  .btn.primary:hover { filter: brightness(1.08); }
 
   .btn.secondary {
     background: hsl(var(--card));
@@ -289,80 +168,37 @@ const pillars = [
     border: 1px solid hsl(var(--border));
   }
 
-  .btn.secondary:hover {
-    border-color: hsl(var(--input));
-    background: hsl(var(--popover));
-  }
+  .btn.secondary:hover { border-color: hsl(var(--input)); }
 
   .btn.ghost {
-    background: transparent;
     color: hsl(var(--ak-neutral-300));
-    border: 1px solid transparent;
   }
 
-  .btn.ghost:hover {
-    color: hsl(var(--foreground));
-    background: hsl(var(--card) / 0.6);
-  }
+  .btn.ghost:hover { color: hsl(var(--foreground)); }
 
-  /* Terminal Snippet Container */
-  .terminal-box {
+  .install {
     margin-top: var(--ak-space-6);
-    max-width: 440px;
+    max-width: 420px;
+    display: flex;
+    align-items: center;
+    gap: var(--ak-space-3);
+    padding: var(--ak-space-2) var(--ak-space-2) var(--ak-space-2) var(--ak-space-4);
     background: hsl(var(--card));
     border: 1px solid hsl(var(--border));
     border-radius: var(--ak-radius-md);
-    overflow: hidden;
-    box-shadow: var(--ak-shadow-2);
-  }
-
-  .terminal-bar {
-    display: flex;
-    align-items: center;
-    gap: var(--ak-space-2);
-    padding: var(--ak-space-2) var(--ak-space-4);
-    background: hsl(var(--ak-neutral-900));
-    border-bottom: 1px solid hsl(var(--border));
-  }
-
-  .dot {
-    width: 10px;
-    height: 10px;
-    border-radius: var(--ak-radius-full);
-  }
-
-  .dot.red { background: hsl(var(--destructive)); }
-  .dot.yellow { background: hsl(var(--warning)); }
-  .dot.green { background: hsl(var(--success)); }
-
-  .terminal-title {
-    margin-left: var(--ak-space-2);
-    font-size: var(--ak-text-xs);
-    font-family: var(--ak-font-mono);
-    color: hsl(var(--muted-foreground));
-    letter-spacing: var(--ak-tracking-wide);
-    text-transform: uppercase;
-  }
-
-  .terminal-content {
-    display: flex;
-    align-items: center;
-    padding: var(--ak-space-3) var(--ak-space-4);
     font-family: var(--ak-font-mono);
     font-size: var(--ak-text-sm);
   }
 
   .prompt {
     color: hsl(var(--primary-accent));
-    margin-right: var(--ak-space-3);
     user-select: none;
   }
 
   .cmd {
     flex: 1;
     color: hsl(var(--foreground));
-    font-family: inherit;
-    font-size: inherit;
+    font: inherit;
   }
 
   .copy-btn {
@@ -376,238 +212,110 @@ const pillars = [
     padding: var(--ak-space-1) var(--ak-space-3);
     font-size: var(--ak-text-xs);
     font-family: var(--ak-font-sans);
-    cursor: pointer;
-    transition: all var(--ak-duration-fast) var(--ak-ease-out);
   }
 
   .copy-btn:hover {
     color: hsl(var(--foreground));
     border-color: hsl(var(--input));
-    background: hsl(var(--accent));
   }
 
   .copy-btn :global(.check-icon) {
     color: hsl(var(--success-foreground));
   }
 
-  /* Right Column: Showcase Code Card */
-  .showcase-card {
+  /* The one memorable thing: an approved amount vs. what the agent sent */
+  .tamper {
+    margin: 0;
+    padding: var(--ak-space-6);
     background: hsl(var(--card));
     border: 1px solid hsl(var(--border));
     border-radius: var(--ak-radius-xl);
-    overflow: hidden;
     box-shadow: var(--ak-shadow-3);
   }
 
-  .showcase-bar {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: var(--ak-space-3) var(--ak-space-4);
-    background: hsl(var(--ak-neutral-900));
-    border-bottom: 1px solid hsl(var(--border));
-  }
-
-  .showcase-dots {
-    display: flex;
-    align-items: center;
-    gap: var(--ak-space-2);
-  }
-
-  .showcase-filename {
-    font-size: var(--ak-text-xs);
+  .tamper figcaption {
     font-family: var(--ak-font-mono);
-    color: hsl(var(--ak-neutral-300));
-  }
-
-  .showcase-tag {
-    font-size: var(--ak-text-xs);
-    font-family: var(--ak-font-mono);
+    font-size: var(--ak-text-sm);
     color: hsl(var(--muted-foreground));
-    background: hsl(var(--ak-neutral-800));
-    padding: 2px 8px;
-    border-radius: var(--ak-radius-sm);
+    margin-bottom: var(--ak-space-5);
   }
 
-  .showcase-list {
-    display: flex;
-    flex-direction: column;
-    gap: var(--ak-space-4);
-    padding: var(--ak-space-5);
-  }
-
-  .showcase-list li {
-    display: flex;
-    gap: var(--ak-space-3);
-    align-items: flex-start;
-  }
-
-  .showcase-list li div {
-    display: flex;
-    flex-direction: column;
-    min-width: 0;
-  }
-
-  .showcase-list strong {
-    color: hsl(var(--foreground));
-    font-size: var(--ak-text-sm);
-    font-weight: 600;
-  }
-
-  .showcase-list span {
-    color: hsl(var(--ak-neutral-300));
-    font-size: var(--ak-text-sm);
-    line-height: var(--ak-leading-normal);
-  }
-
-  .showcase-list :global(.g-check) {
-    flex-shrink: 0;
-    margin-top: 3px;
-    color: hsl(var(--success-foreground));
-  }
-
-  .showcase-status {
-    display: flex;
+  .row {
+    display: grid;
+    grid-template-columns: 1fr auto auto;
     align-items: center;
-    justify-content: space-between;
-    flex-wrap: wrap;
-    gap: var(--ak-space-2);
-    padding: var(--ak-space-3) var(--ak-space-4);
-    background: hsl(var(--ak-neutral-900));
-    border-top: 1px solid hsl(var(--border));
-    font-size: var(--ak-text-xs);
+    gap: var(--ak-space-4);
+    padding: var(--ak-space-4) var(--ak-space-5);
+    border: 1px solid hsl(var(--border));
+    border-radius: var(--ak-radius-md);
+    background: hsl(var(--ak-neutral-950));
   }
 
-  .status-ok {
+  .who {
+    font-size: var(--ak-text-sm);
+    color: hsl(var(--ak-neutral-300));
+  }
+
+  .amount {
+    font-family: var(--ak-font-mono);
+    font-size: var(--ak-text-xl);
+    font-weight: 600;
+    color: hsl(var(--foreground));
+  }
+
+  .verdict {
     display: inline-flex;
     align-items: center;
     gap: var(--ak-space-2);
-    color: hsl(var(--success-foreground));
-    font-family: var(--ak-font-mono);
+    min-width: 96px;
+    justify-content: flex-end;
+    font-size: var(--ak-text-sm);
     font-weight: 500;
   }
 
-  .status-dot {
-    width: 8px;
-    height: 8px;
-    border-radius: var(--ak-radius-full);
-    background: hsl(var(--success-foreground));
-    box-shadow: 0 0 8px hsl(var(--success-foreground) / 0.7);
+  .row.ok .verdict { color: hsl(var(--success-foreground)); }
+
+  .row.bad {
+    border-color: hsl(var(--destructive) / 0.6);
   }
 
-  .status-meta {
-    color: hsl(var(--ak-neutral-300));
-    font-family: var(--ak-font-mono);
+  .row.bad .amount {
+    text-decoration: line-through;
+    text-decoration-color: hsl(var(--destructive));
   }
 
-  /* 3-Pillar Overview Strip */
-  .pillars-grid {
-    margin-top: var(--ak-space-12);
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: var(--ak-space-6);
-  }
+  .row.bad .verdict { color: hsl(var(--destructive-muted)); }
 
-  .pillar-card {
-    display: flex;
-    flex-direction: column;
-    background: hsl(var(--card));
-    border: 1px solid hsl(var(--border));
-    border-radius: var(--radius);
-    padding: var(--ak-space-6);
-    transition: border-color var(--ak-duration-fast) var(--ak-ease-out);
-  }
-
-  .pillar-card:hover {
-    border-color: hsl(var(--input));
-  }
-
-  .pillar-top {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: var(--ak-space-3);
-    margin-bottom: var(--ak-space-4);
-  }
-
-  .pillar-icon-wrap {
-    flex-shrink: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 38px;
-    height: 38px;
-    border-radius: var(--ak-radius-sm);
-    background: hsl(var(--ak-neutral-800));
-    color: hsl(var(--primary-accent));
-  }
-
-  .pillar-tag {
-    font-size: var(--ak-text-xs);
-    font-family: var(--ak-font-mono);
-    color: hsl(var(--primary-accent));
-    background: hsl(var(--ak-neutral-800));
-    padding: 2px 8px;
-    border-radius: var(--ak-radius-sm);
-  }
-
-  .pillar-title {
-    font-size: var(--ak-text-base);
-    font-weight: 600;
-    color: hsl(var(--foreground));
-  }
-
-  .pillar-desc {
-    margin-top: var(--ak-space-2);
-    font-size: var(--ak-text-sm);
-    color: hsl(var(--ak-neutral-300));
-    line-height: var(--ak-leading-normal);
-  }
-
-  .pillar-specs {
-    margin-top: auto;
-    padding-top: var(--ak-space-4);
-    font-size: var(--ak-text-xs);
-    font-family: var(--ak-font-mono);
-    color: hsl(var(--muted-foreground));
-  }
-
-  @media (min-width: 1024px) {
-    h1 {
-      font-size: var(--ak-text-4xl);
-    }
+  .link {
+    width: 2px;
+    height: var(--ak-space-5);
+    margin: 0 auto;
+    background: hsl(var(--border));
   }
 
   @media (max-width: 980px) {
-    .hero-split {
+    .inner {
       grid-template-columns: 1fr;
-    }
-    .pillars-grid {
-      grid-template-columns: 1fr;
+      gap: var(--ak-space-10);
     }
   }
 
   @media (max-width: 640px) {
-    h1 {
-      font-size: var(--ak-text-2xl);
-    }
-    .lead {
-      font-size: var(--ak-text-base);
-    }
-    .ctas .btn {
-      flex: 1 1 100%;
-    }
-    .terminal-box {
-      max-width: none;
-    }
-    .showcase-tag {
-      display: none;
-    }
     .hero {
-      padding: var(--ak-space-12) var(--ak-space-4) var(--ak-space-8);
+      padding: var(--ak-space-12) var(--ak-space-4) var(--ak-space-10);
     }
-    .grid-texture {
-      height: 360px;
+    h1 { font-size: var(--ak-text-3xl); }
+    .lead { font-size: var(--ak-text-base); }
+    .ctas .btn { flex: 1 1 100%; }
+    .install { max-width: none; }
+    .tamper { padding: var(--ak-space-4); }
+    .row {
+      grid-template-columns: 1fr auto;
+      row-gap: var(--ak-space-1);
+    }
+    .verdict {
+      grid-column: 1 / -1;
+      justify-content: flex-start;
     }
   }
 </style>

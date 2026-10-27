@@ -3,32 +3,20 @@ import Icon from './Icon.astro';
 
 const faqs = [
   {
-    q: 'How does authkestra-mcp secure AI agents and Model Context Protocol servers?',
-    a: 'authkestra-mcp provides a 3-tier security architecture for MCP JSON-RPC tools: Tier 1 (Public) for unauthenticated read-only queries; Tier 2 (Scoped) requiring OAuth 2.1 bearer or sender-bound DPoP tokens; and Tier 3 (HumanApproved) requiring cryptographic step-up approval. Additionally, the DownstreamTokenBroker resolves third-party API credentials on the server without exposing refresh tokens or secrets in the LLM context window.',
+    q: 'How does it keep AI agents from misusing tools?',
+    a: 'Every MCP tool sits in one of three tiers: public, scoped to an OAuth 2.1 token, or human-approved with a passkey. Approval covers a hash of the exact arguments, so a changed value fails the call. Third-party credentials stay in a server-side vault.',
   },
   {
-    q: 'How does Authkestra prevent AI agents from tampering with approved tool parameters?',
-    a: 'When a tool requires Human-in-the-Loop step-up approval, Authkestra applies RFC 8785 JSON Canonicalization Scheme (JCS) to the tool arguments and computes a deterministic SHA-256 challenge digest over (session_id, tool_name, jcs_arguments, expires_at). If an AI agent or prompt injection alters even a single parameter value before execution, the cryptographic digest check fails and aborts the call.',
+    q: 'Should I use this or Keycloak, Ory or Zitadel?',
+    a: 'Use Authkestra when you are building in Rust and want auth in-process with no sidecar. Use a standalone IdP if you need an admin console, SAML, or workforce SSO. You can connect the two over OIDC.',
   },
   {
-    q: 'When should I choose an embedded engine like Authkestra vs. Keycloak, Ory, or Zitadel?',
-    a: 'Choose Authkestra when you are building Rust services or MCP servers and want in-process OAuth 2.1, Passkeys, Cedar policy, and agent tool guards with zero network hops or extra sidecar clusters. Choose a standalone IdP (Keycloak, Zitadel, Ory) if you need a turnkey admin GUI for non-technical operators, legacy SAML 2.0 federation, or a central workforce SSO portal across many non-Rust languages—you can also connect Authkestra to them via OIDC discovery.',
+    q: 'How does stateless OAuth work without a session database?',
+    a: 'OAuth state and PKCE verifiers live in an AES-256-GCM encrypted cookie. On callback the engine decrypts it in memory, so you can scale out without Redis or SQL for sessions.',
   },
   {
-    q: 'What is Re-Proof Gating and how does it prevent session escalation?',
-    a: 'In many applications, an attacker who steals an active session cookie can register a new passkey or TOTP authenticator to lock out the legitimate account owner. Authkestra enforces Re-Proof Gating: enrolling high-stakes authenticators requires proving an existing primary factor (ReproofRequirement::FreshPasskey or FreshPassword) within a bounded time window.',
-  },
-  {
-    q: 'How does Stateless OAuth work without storing sessions in a database?',
-    a: 'Authkestra encapsulates OAuth2 authorization state and PKCE code verifiers inside AES-256-GCM encrypted, authenticated cookies (__Host-authkestra_state). The browser holds the encrypted state during the OAuth redirect flow, and upon callback the engine verifies the authentication tag and decrypts the state in memory—scaling horizontally without a shared Redis or SQL session store.',
-  },
-  {
-    q: 'How do AI coding assistants discover Authkestra APIs via llms.txt and Agent Skills?',
-    a: 'Authkestra publishes machine-readable API summaries at https://authkestra.com/llms.txt and full documentation at https://docs.authkestra.com/llms-full.txt. The official Authkestra/skills repository also provides structured Claude Code and agent skills that teach coding assistants exact typestate builder rules, Cargo feature flags, and storage traits.',
-  },
-  {
-    q: 'Can I use Authkestra with any database or web framework?',
-    a: 'Yes. The engine core is pure Rust with zero framework dependencies. First-party adapters are provided for Axum (authkestra-axum) and Actix-web (authkestra-actix). Persistence is defined via traits (KvStore, SessionStore, CredentialStore, OpStore) with built-in in-memory, Redis, and SQL (PostgreSQL, MySQL, SQLite) implementations.',
+    q: 'Does it work with my framework and database?',
+    a: 'Yes. The core has no framework dependency. There are Axum and Actix-web adapters, and stores for memory, Redis, PostgreSQL, MySQL and SQLite. You can implement the store traits for anything else.',
   },
 ];
 ---
@@ -36,24 +24,17 @@ const faqs = [
   <div class="inner">
     <div class="faq-layout">
       <div class="header">
-        <span class="eyebrow">ARCHITECTURE &amp; OPERATIONS</span>
         <h2 id="faq-heading">Frequently Asked Questions</h2>
-        <p class="lead">
-          Direct answers to architectural, cryptographic, and operational questions about
-          Authkestra and MCP agent security.
-        </p>
+        <p class="lead">Short answers. The docs have the rest.</p>
         <div class="faq-links">
           <a href="https://docs.authkestra.com" target="_blank" rel="noopener noreferrer">
-            <span>Read Full Documentation</span>
-            <span aria-hidden="true">→</span>
+            <span>Documentation</span>
           </a>
           <a href="https://github.com/Authkestra/authkestra/blob/main/SECURITY.md" target="_blank" rel="noopener noreferrer">
-            <span>Security Policy &amp; Disclosure</span>
-            <span aria-hidden="true">→</span>
+            <span>Security policy</span>
           </a>
           <a href="https://play.authkestra.com" target="_blank" rel="noopener noreferrer">
-            <span>Try Interactive Playground</span>
-            <span aria-hidden="true">→</span>
+            <span>Playground</span>
           </a>
         </div>
       </div>
@@ -100,15 +81,6 @@ const faqs = [
     top: 6rem;
   }
 
-  .eyebrow {
-    display: inline-block;
-    font-size: var(--ak-text-xs);
-    font-family: var(--ak-font-mono);
-    font-weight: 600;
-    color: hsl(var(--primary-accent));
-    letter-spacing: var(--ak-tracking-wide);
-    margin-bottom: var(--ak-space-3);
-  }
 
   h2 {
     font-size: var(--ak-text-3xl);

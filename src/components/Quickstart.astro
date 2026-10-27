@@ -1,13 +1,13 @@
 ---
 import Icon from './Icon.astro';
-import { highlightRust, highlightRustLine } from '../lib/rust-highlight';
+import { highlightRust } from '../lib/rust-highlight';
 
 const tabs = [
   {
     id: 'tab-mcp',
     label: 'MCP Server Agent Guard',
     title: 'Model Context Protocol tool security',
-    lead: 'Intercept MCP JSON-RPC requests across 3 security tiers. High-stakes tools require cryptographic parameter binding (RFC 8785 JCS) and human biometric approval before execution.',
+    lead: 'Every MCP tool call goes through a security tier. High-stakes tools need a human passkey approval over the exact arguments.',
     docsHref: 'https://docs.authkestra.com/guides/ai-agents/',
     docsText: 'Read the AI Agent & MCP guide',
     cargo: `authkestra = { version = "0.13", features = ["mcp", "axum", "memory"] }`,
@@ -31,7 +31,7 @@ router.register_tool(
     id: 'tab-passkeys',
     label: 'Passkeys & Step-Up Re-Proof',
     title: 'FIDO2 Passkeys with Re-Proof Gating',
-    lead: 'Phishing-resistant WebAuthn authentication with mandatory re-proof checks. Enrolling a new authenticator requires proving an existing factor first, preventing session-hijack privilege escalation.',
+    lead: 'Passkeys with re-proof: adding a new authenticator means proving an existing one first, so a stolen session can’t take over the account.',
     docsHref: 'https://docs.authkestra.com/providers/passkeys/',
     docsText: 'Read the Passkeys guide',
     cargo: `authkestra = { version = "0.13", features = ["axum", "memory", "passkeys"] }`,
@@ -52,8 +52,8 @@ let challenge = passkeys.start_register(
   {
     id: 'tab-oauth2',
     label: 'Web App OAuth2 (Stateless)',
-    title: 'Stateless OAuth2 login in 4 lines',
-    lead: 'Add the facade crate with the features you need, then build the engine. OAuth state and PKCE verifiers are encrypted into secure cookies — no database session store required.',
+    title: 'Stateless OAuth2 login',
+    lead: 'OAuth state and PKCE live in an encrypted cookie, so there is no session database to run.',
     docsHref: 'https://docs.authkestra.com/providers/oauth2/',
     docsText: 'Read the OAuth2 guide',
     cargo: `authkestra = { version = "0.13", features = ["axum", "memory", "github"] }`,
@@ -76,18 +76,15 @@ let app = Router::new()
 
 const renderedTabs = tabs.map((tab) => ({
   ...tab,
-  cargoHtml: highlightRustLine(tab.cargo),
   rustHtml: highlightRust(tab.rust),
+  features: (tab.cargo.match(/features = \[(.*?)\]/)?.[1] ?? '').replace(/"/g, '').replace(/,\s*/g, ', '),
 }));
 ---
 <section id="quickstart" class="quickstart" aria-labelledby="quickstart-heading">
   <div class="inner">
     <div class="section-header">
-      <h2 id="quickstart-heading">Interactive Quickstart</h2>
-      <p class="lead">
-        Explore how Authkestra orchestrates authentication and agent authorization across common architectures.
-        Select a scenario to view its Cargo dependencies and compile-time safe Rust implementation:
-      </p>
+      <h2 id="quickstart-heading">Quickstart</h2>
+      <p class="lead">Pick a scenario. Each one is a few lines of Rust.</p>
     </div>
 
     <!-- Tablist Navigation -->
@@ -123,33 +120,14 @@ const renderedTabs = tabs.map((tab) => ({
               <p>{tab.lead}</p>
               <a class="docs-link" href={tab.docsHref} target="_blank" rel="noopener noreferrer">
                 <span>{tab.docsText}</span>
-                <span aria-hidden="true">→</span>
               </a>
             </div>
 
             <div class="panel-code">
-              <!-- Cargo.toml snippet -->
-              <figure class="code-box">
-                <div class="code-bar">
-                  <figcaption>Cargo.toml</figcaption>
-                  <button
-                    class="code-copy-btn"
-                    data-clipboard={tab.cargo}
-                    aria-label="Copy Cargo snippet"
-                    title="Copy Cargo snippet"
-                  >
-                    <Icon name="copy" size={14} class="copy-icon" aria-hidden="true" />
-                    <Icon name="check" size={14} class="check-icon visually-hidden" aria-hidden="true" />
-                    <span class="btn-text">Copy</span>
-                  </button>
-                </div>
-                <pre class="code"><code><span class="code-line" set:html={tab.cargoHtml} /></code></pre>
-              </figure>
-
               <!-- src/main.rs snippet -->
               <figure class="code-box">
                 <div class="code-bar">
-                  <figcaption>src/main.rs</figcaption>
+                  <figcaption>features: {tab.features}</figcaption>
                   <button
                     class="code-copy-btn"
                     data-clipboard={tab.rust}

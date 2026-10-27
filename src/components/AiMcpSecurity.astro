@@ -3,46 +3,40 @@ import Icon from './Icon.astro';
 
 const tiers = [
   {
-    tier: 'Tier 1',
-    name: 'Public Tool Access',
-    badge: 'Open / Context-Aware',
+    name: 'Public',
     icon: 'circle-check',
     diagram: 'tier1',
-    desc: 'Callable without credentials or with optional caller identity context. Ideal for read-only lookups, health checks, and public documentation queries.',
-    features: [
-      'Zero credential overhead for read-only tools',
-      'Optional caller identity context injection',
-      'Structured audit logging & rate-limit hooks',
-      'Direct JSON-RPC handler dispatch',
-    ],
+    desc: 'Read-only tools anyone can call. Caller identity is attached when present.',
   },
   {
-    tier: 'Tier 2',
-    name: 'Scoped Resource Guard',
-    badge: 'OAuth 2.1 · DPoP',
+    name: 'Scoped',
     icon: 'shield-check',
     diagram: 'tier2',
-    desc: 'Requires a verified OAuth 2.1 bearer or sender-bound token. Missing scopes return standard resource metadata discovery challenges automatically.',
-    features: [
-      'Protected resource metadata (/.well-known)',
-      'Sender-bound tokens (DPoP & mTLS)',
-      'Declarative AWS Cedar policy evaluation',
-      'Automatic 401 scope challenge elicitation',
-    ],
+    desc: 'Needs an OAuth 2.1 token with the right scopes, sender-bound with DPoP or mTLS.',
   },
   {
-    tier: 'Tier 3',
-    name: 'Human-Approved Step-Up',
-    badge: 'JCS · Passkey Proof',
+    name: 'Human-approved',
     icon: 'key',
     diagram: 'tier3',
-    desc: 'Mandates human passkey or TOTP approval cryptographically bound to the exact tool arguments before executing transfers, writes, or deletions.',
-    features: [
-      'Canonical JSON argument hashing (RFC 8785 JCS)',
-      'Deterministic SHA-256 challenge digest binding',
-      'WebAuthn Passkey or TOTP step-up verification',
-      'Single-use atomic execution token consumption',
-    ],
+    desc: 'A person approves the exact arguments with a passkey before the tool runs.',
+  },
+];
+
+const guarantees = [
+  {
+    icon: 'shield-alert',
+    title: 'Arguments can’t drift',
+    body: 'Approval is tied to a hash of the exact arguments. Change one value and the call fails.',
+  },
+  {
+    icon: 'lock',
+    title: 'Secrets never reach the model',
+    body: 'API keys and refresh tokens stay in an encrypted server-side vault.',
+  },
+  {
+    icon: 'square-function',
+    title: 'Miswiring fails to compile',
+    body: 'A missing store or validator is a build error, not a production panic.',
   },
 ];
 ---
@@ -50,36 +44,15 @@ const tiers = [
   <span id="ai-agents-mcp" class="anchor-alias" aria-hidden="true"></span>
   <div class="inner">
     <div class="header">
-      <div class="pill">
-        <Icon name="bot" size={16} class="pill-icon" aria-hidden="true" />
-        <span>authkestra-mcp</span>
-      </div>
-      <h2 id="ai-mcp-heading">AI Agent &amp; Model Context Protocol (MCP) Security</h2>
+      <h2 id="ai-mcp-heading">Give AI agents tools, not secrets</h2>
       <p class="lead">
-        Autonomous AI agents need access to tools, but giving models unrestricted execution rights
-        or raw API keys crosses a critical security boundary. <code>authkestra-mcp</code> intercepts
-        MCP JSON-RPC requests with three composable security tiers, cryptographic parameter binding,
-        and server-side credential isolation.
+        authkestra-mcp puts every MCP tool call behind one of three security tiers.
       </p>
     </div>
 
-    <!-- 3-Tier Grid with Legible 2D Animated SVGs -->
     <div class="tiers-grid">
       {tiers.map((t) => (
         <div class="tier-card">
-          <div class="tier-header">
-            <span class="tier-num">{t.tier}</span>
-            <span class="tier-badge">{t.badge}</span>
-          </div>
-
-          <div class="tier-title-row">
-            <div class="tier-icon-wrap">
-              <Icon name={t.icon} size={20} class="tier-icon" aria-hidden="true" />
-            </div>
-            <h3>{t.name}</h3>
-          </div>
-
-          <!-- 2D Animated SVG Diagram for Tier (Scaled-up legible labels) -->
           <div class="tier-diagram-wrap">
             {t.diagram === 'tier1' && (
               <svg class="tier-diagram svg-tier-1" viewBox="0 0 320 116" role="img" aria-label="Tier 1 Public Tool Conduit">
@@ -104,7 +77,6 @@ const tiers = [
                 </g>
               </svg>
             )}
-
             {t.diagram === 'tier2' && (
               <svg class="tier-diagram svg-tier-2" viewBox="0 0 320 116" role="img" aria-label="Tier 2 Scoped Resource Guard">
                 <path class="t-rail" d="M44,56 L134,56" />
@@ -133,7 +105,6 @@ const tiers = [
                 </g>
               </svg>
             )}
-
             {t.diagram === 'tier3' && (
               <svg class="tier-diagram svg-tier-3" viewBox="0 0 320 116" role="img" aria-label="Tier 3 Human-Approved Step-Up">
                 <path class="t-rail" d="M42,56 L92,56" />
@@ -167,121 +138,23 @@ const tiers = [
               </svg>
             )}
           </div>
-
+          <h3>{t.name}</h3>
           <p class="tier-desc">{t.desc}</p>
-          <ul class="tier-features">
-            {t.features.map((f) => (
-              <li>
-                <Icon name="check" size={15} class="feature-check" aria-hidden="true" />
-                <span>{f}</span>
-              </li>
-            ))}
-          </ul>
         </div>
       ))}
     </div>
 
-    <!-- Deep Dive Architecture: JCS Parameter Binding, Token Vault, & Typestate Guardrails -->
-    <div class="architecture-grid">
-      <!-- Card 1: JCS Parameter Binding -->
-      <div class="arch-card">
-        <div class="arch-icon-wrap">
-          <Icon name="shield-alert" size={22} class="arch-icon" aria-hidden="true" />
-        </div>
-        <h3>JCS Parameter Tampering Defense</h3>
-        <p>
-          Prompt injections and model hallucinations can alter critical arguments after a user
-          approves an action. Authkestra binds approvals using <strong>RFC 8785 JSON
-          Canonicalization Scheme (JCS)</strong>: a SHA-256 digest over the session, the tool name,
-          the canonical arguments, and the expiry.
-        </p>
-        <p class="arch-foot">
-          If an agent mutates even one field or numeric value (for example an amount of 50 becoming
-          5000) between approval and execution, the digest check fails and aborts the call.
-        </p>
-      </div>
-
-      <!-- Card 2: Zero-Trust Token Vault -->
-      <div class="arch-card">
-        <div class="arch-icon-wrap">
-          <Icon name="lock" size={22} class="arch-icon" aria-hidden="true" />
-        </div>
-        <h3>Zero-Trust Downstream Token Vault</h3>
-        <p>
-          Keep OAuth2 refresh tokens, client secrets, and third-party API keys out of the LLM
-          prompt context with a server-side token broker and encrypted vault:
-        </p>
-        <ul class="arch-list">
-          <li>Credentials are encrypted at rest with AES-256-GCM envelope keys.</li>
-          <li>Handlers receive an isolated tool context bound to the verified caller.</li>
-          <li>Short-lived downstream tokens are dispensed just-in-time on the server.</li>
-        </ul>
-      </div>
-
-      <!-- Card 3: Typestate Compiler Guardrails -->
-      <div class="arch-card">
-        <div class="arch-icon-wrap">
-          <Icon name="square-function" size={22} class="arch-icon" aria-hidden="true" />
-        </div>
-        <h3>Typestate Compiler Guardrails</h3>
-        <p>
-          Whether written by hand or generated by an AI assistant, missing session stores or
-          unconfigured token validators fail at compile time:
-        </p>
-
-        <!-- Clean, Non-Overlapping 2D Animated Typestate Guardrail SVG -->
-        <div class="typestate-diagram-wrap">
-          <svg class="typestate-diagram" viewBox="0 0 340 148" role="img" aria-label="Typestate Compiler Guardrail Diagram">
-            <!-- Top Lane: Incomplete Config Halted at Compile-Time -->
-            <g class="lane lane-halted" transform="translate(0, 44)">
-              <text x="16" y="-20" class="lane-title">Incomplete Builder</text>
-              <text x="324" y="-20" class="barrier-title" text-anchor="end">error[E0277]</text>
-
-              <path class="lane-rail" d="M32,0 L164,0" />
-              <circle class="lane-particle particle-halt" r="4" cy="0" />
-
-              <g transform="translate(32, 0)">
-                <circle r="14" class="lane-node node-halt" />
-                <text x="0" y="4" class="lane-node-text" text-anchor="middle">S1</text>
-              </g>
-
-              <g class="barrier" transform="translate(164, 0)">
-                <rect x="-4" y="-12" width="8" height="24" rx="2" class="barrier-wall" />
-                <text x="14" y="4" class="barrier-sub">MissingStore</text>
-              </g>
-            </g>
-
-            <!-- Bottom Lane: Complete Typestate Verified by rustc -->
-            <g class="lane lane-verified" transform="translate(0, 116)">
-              <text x="16" y="-20" class="lane-title ok">Engine&lt;Ready, Verified&gt;</text>
-              <text x="324" y="-20" class="gateway-tag" text-anchor="end">rustc verified</text>
-
-              <path class="lane-rail" d="M32,0 L296,0" />
-              <path class="lane-stream" d="M32,0 L296,0" />
-              <circle class="lane-particle particle-pass" r="4" cy="0" />
-
-              <g transform="translate(32, 0)">
-                <circle r="14" class="lane-node node-ok" />
-                <text x="0" y="4" class="lane-node-text" text-anchor="middle">S2</text>
-              </g>
-
-              <g class="gateway" transform="translate(164, 0)">
-                <rect x="-4" y="-12" width="8" height="24" rx="2" class="gateway-post" />
-              </g>
-
-              <g transform="translate(296, 0)">
-                <circle r="14" class="lane-node node-prod" />
-                <text x="0" y="4" class="lane-node-text text-success" text-anchor="middle">✓</text>
-              </g>
-            </g>
-          </svg>
-        </div>
-
-        <p class="arch-foot">
-          Misconfigured builders fail to compile instead of panicking on missing stores at runtime.
-        </p>
-      </div>
-    </div>
+    <ul class="guarantees">
+      {guarantees.map((g) => (
+        <li>
+          <Icon name={g.icon} size={20} class="g-icon" aria-hidden="true" />
+          <div>
+            <h3>{g.title}</h3>
+            <p>{g.body}</p>
+          </div>
+        </li>
+      ))}
+    </ul>
   </div>
 </section>
 
@@ -306,24 +179,6 @@ const tiers = [
 
   .header {
     max-width: 72ch;
-  }
-
-  .pill {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--ak-space-2);
-    padding: var(--ak-space-1) var(--ak-space-3);
-    border-radius: var(--ak-radius-full);
-    background: hsl(var(--card));
-    border: 1px solid hsl(var(--border));
-    font-size: var(--ak-text-xs);
-    font-family: var(--ak-font-mono);
-    color: hsl(var(--primary-accent));
-    margin-bottom: var(--ak-space-4);
-  }
-
-  .pill-icon {
-    color: hsl(var(--primary-accent));
   }
 
   h2 {
@@ -360,50 +215,6 @@ const tiers = [
 
   .tier-card:hover {
     border-color: hsl(var(--input));
-  }
-
-  .tier-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: var(--ak-space-4);
-  }
-
-  .tier-num {
-    font-size: var(--ak-text-xs);
-    font-family: var(--ak-font-mono);
-    font-weight: 600;
-    color: hsl(var(--primary-accent));
-    text-transform: uppercase;
-    letter-spacing: var(--ak-tracking-wide);
-  }
-
-  .tier-badge {
-    font-size: var(--ak-text-xs);
-    background: hsl(var(--ak-neutral-800));
-    color: hsl(var(--ak-neutral-200));
-    padding: 2px 8px;
-    border-radius: var(--ak-radius-sm);
-    font-family: var(--ak-font-mono);
-  }
-
-  .tier-title-row {
-    display: flex;
-    align-items: center;
-    gap: var(--ak-space-3);
-    margin-bottom: var(--ak-space-4);
-  }
-
-  .tier-icon-wrap {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 34px;
-    height: 34px;
-    border-radius: var(--ak-radius-sm);
-    background: hsl(var(--ak-neutral-800));
-    color: hsl(var(--primary-accent));
-    flex-shrink: 0;
   }
 
   .tier-card h3 {
@@ -611,253 +422,45 @@ const tiers = [
     font-size: var(--ak-text-sm);
     color: hsl(var(--ak-neutral-300));
     line-height: var(--ak-leading-relaxed);
-    margin-bottom: var(--ak-space-5);
-  }
-
-  .tier-features {
-    margin-top: auto;
-    padding-top: var(--ak-space-4);
-    border-top: 1px solid hsl(var(--border));
-    display: flex;
-    flex-direction: column;
-    gap: var(--ak-space-2);
-    list-style: none;
-    padding-left: 0;
-  }
-
-  .tier-features li {
-    display: flex;
-    align-items: flex-start;
-    gap: var(--ak-space-2);
-    font-size: var(--ak-text-sm);
-    color: hsl(var(--ak-neutral-200));
-    line-height: var(--ak-leading-snug);
-  }
-
-  .feature-check {
-    color: hsl(var(--success-foreground));
-    flex-shrink: 0;
-    margin-top: 3px;
-  }
-
-  /* Architecture Sub-Grid */
-  .architecture-grid {
-    margin-top: var(--ak-space-12);
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: var(--ak-space-6);
-    align-items: stretch;
-  }
-
-  .arch-card {
-    background: hsl(var(--card));
-    border: 1px solid hsl(var(--border));
-    border-radius: var(--radius);
-    padding: var(--ak-space-6);
-    display: flex;
-    flex-direction: column;
-  }
-
-  .arch-icon-wrap {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 40px;
-    height: 40px;
-    border-radius: var(--ak-radius-md);
-    background: hsl(var(--ak-neutral-800));
-    color: hsl(var(--primary-accent));
-    margin-bottom: var(--ak-space-4);
-  }
-
-  .arch-card h3 {
-    font-size: var(--ak-text-lg);
-    font-weight: 600;
-    color: hsl(var(--foreground));
-    margin-bottom: var(--ak-space-3);
-  }
-
-  .arch-card p {
-    font-size: var(--ak-text-sm);
-    color: hsl(var(--ak-neutral-300));
-    line-height: var(--ak-leading-relaxed);
-  }
-
-  .formula-box {
-    margin: var(--ak-space-4) 0;
-    padding: var(--ak-space-3) var(--ak-space-4);
-    background: hsl(var(--ak-neutral-950));
-    border: 1px solid hsl(var(--border));
-    border-radius: var(--ak-radius-sm);
-    font-family: var(--ak-font-mono);
-    font-size: var(--ak-text-xs);
-    color: hsl(var(--primary-accent));
-    overflow-x: auto;
-    white-space: nowrap;
-  }
-
-  .arch-foot {
-    margin-top: auto;
-    padding-top: var(--ak-space-3);
-  }
-
-  .vault-pipeline {
-    margin-top: auto;
-    padding: var(--ak-space-3) var(--ak-space-4);
-    background: hsl(var(--ak-neutral-950));
-    border: 1px solid hsl(var(--border));
-    border-radius: var(--ak-radius-sm);
-    font-family: var(--ak-font-mono);
-    font-size: var(--ak-text-xs);
-    color: hsl(var(--primary-accent));
-    overflow-x: auto;
-    white-space: nowrap;
-  }
-
-  /* Typestate Compiler Guardrail SVG (Clean, Non-Overlapping) */
-  .typestate-diagram-wrap {
-    margin: var(--ak-space-4) 0;
-    background: hsl(var(--ak-neutral-950));
-    border: 1px solid hsl(var(--border));
-    border-radius: var(--ak-radius-md);
-    padding: var(--ak-space-3);
-    overflow: hidden;
-  }
-
-  .typestate-diagram {
-    width: 100%;
-    height: auto;
-    display: block;
-  }
-
-  .lane-rail {
-    fill: none;
-    stroke: hsl(var(--border));
-    stroke-width: 2;
-  }
-
-  .lane-stream {
-    fill: none;
-    stroke: hsl(var(--primary-accent));
-    stroke-width: 2.5;
-    stroke-linecap: round;
-    stroke-dasharray: 40 80;
-    animation: tierStreamFlow 2.8s linear infinite;
-  }
-
-  .lane-title {
-    font-size: 11px;
-    font-family: var(--ak-font-mono);
-    fill: hsl(var(--destructive-muted));
-    font-weight: 600;
-  }
-
-  .lane-title.ok {
-    fill: hsl(var(--success-foreground));
-  }
-
-  .lane-node {
-    fill: hsl(var(--card));
-    stroke: hsl(var(--border));
-    stroke-width: 1.5;
-  }
-
-  .node-halt { stroke: hsl(var(--destructive-muted)); }
-  .node-ok { stroke: hsl(var(--primary-accent)); }
-  .node-prod {
-    stroke: hsl(var(--success-foreground));
-    fill: hsl(var(--primary-subtle) / 0.5);
-  }
-
-  .lane-node-text {
-    font-size: 10px;
-    font-family: var(--ak-font-mono);
-    font-weight: 700;
-    fill: hsl(var(--foreground));
-  }
-
-  .text-success { fill: hsl(var(--success-foreground)); }
-
-  .barrier-wall {
-    fill: hsl(var(--destructive));
-    filter: drop-shadow(0 0 6px hsl(var(--destructive) / 0.7));
-  }
-
-  .barrier-title {
-    font-size: 10.5px;
-    font-family: var(--ak-font-mono);
-    font-weight: 700;
-    fill: hsl(var(--destructive-muted));
-  }
-
-  .barrier-sub {
-    font-size: 10.5px;
-    font-family: var(--ak-font-mono);
-    fill: hsl(var(--ak-neutral-300));
-  }
-
-  .gateway-post {
-    fill: hsl(var(--primary-accent));
-    filter: drop-shadow(0 0 4px hsl(var(--primary-accent) / 0.6));
-  }
-
-  .gateway-tag {
-    font-size: 10.5px;
-    font-family: var(--ak-font-mono);
-    fill: hsl(var(--primary-accent));
-    font-weight: 600;
-  }
-
-  .particle-halt {
-    fill: hsl(var(--destructive-muted));
-    animation: particleHaltTravel 2.4s cubic-bezier(0.4, 0, 0.2, 1) infinite;
-  }
-
-  @keyframes particleHaltTravel {
-    0% { cx: 32px; opacity: 0; }
-    20% { opacity: 1; }
-    80% { opacity: 1; cx: 158px; }
-    100% { cx: 158px; opacity: 0; }
-  }
-
-  .particle-pass {
-    fill: hsl(var(--primary-accent));
-    filter: drop-shadow(0 0 4px hsl(var(--primary-accent) / 0.8));
-    animation: particlePassTravel 3s cubic-bezier(0.4, 0, 0.2, 1) infinite;
-  }
-
-  @keyframes particlePassTravel {
-    0% { cx: 32px; opacity: 0; }
-    15% { opacity: 1; }
-    85% { opacity: 1; }
-    100% { cx: 296px; opacity: 0; }
-  }
-
-  .arch-list {
-    margin: var(--ak-space-4) 0;
-    display: flex;
-    flex-direction: column;
-    gap: var(--ak-space-2);
-    list-style: none;
-    padding-left: 0;
-  }
-
-  .arch-list li {
-    font-size: var(--ak-text-sm);
-    color: hsl(var(--ak-neutral-300));
-    line-height: var(--ak-leading-normal);
-    position: relative;
-    padding-left: var(--ak-space-4);
-  }
-
-  .arch-list li::before {
-    content: "•";
-    position: absolute;
-    left: 0;
-    color: hsl(var(--primary-accent));
+    margin-top: var(--ak-space-2);
   }
 
   /* Accessibility: prefers-reduced-motion */
+  .guarantees {
+    margin-top: var(--ak-space-12);
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--ak-space-8);
+    padding-top: var(--ak-space-8);
+    border-top: 1px solid hsl(var(--border));
+  }
+
+  .guarantees li {
+    display: flex;
+    gap: var(--ak-space-4);
+    align-items: flex-start;
+  }
+
+  .guarantees :global(.g-icon) {
+    flex-shrink: 0;
+    margin-top: 2px;
+    color: hsl(var(--primary-accent));
+  }
+
+  .guarantees h3 {
+    font-size: var(--ak-text-base);
+    font-weight: 600;
+  }
+
+  .guarantees p {
+    margin-top: var(--ak-space-1);
+    font-size: var(--ak-text-sm);
+    color: hsl(var(--ak-neutral-300));
+    line-height: var(--ak-leading-normal);
+  }
+
+  .tier-card h3 { margin-top: 0; }
+
   @media (prefers-reduced-motion: reduce) {
     .t-stream,
     .lane-stream {
@@ -878,7 +481,7 @@ const tiers = [
 
   @media (max-width: 960px) {
     .tiers-grid,
-    .architecture-grid {
+    .guarantees {
       grid-template-columns: 1fr;
     }
   }

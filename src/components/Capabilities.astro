@@ -1,0 +1,189 @@
+---
+const methods = [
+  { name: 'Passkeys (WebAuthn)', href: 'providers/passkeys/' },
+  { name: 'TOTP authenticator apps', href: 'providers/totp/' },
+  { name: 'Magic links', href: 'providers/magic-link/' },
+  { name: 'Email and SMS codes', href: 'providers/otp/' },
+  { name: 'Recovery codes', href: 'providers/recovery-codes/' },
+  { name: 'Stateless OAuth 2.1', href: 'providers/oauth2/' },
+  { name: 'OIDC discovery client', href: 'providers/oidc/' },
+  { name: 'Client credentials', href: 'providers/client-credentials/' },
+  { name: 'Device authorization', href: 'providers/device-flow/' },
+  { name: 'Bot protection', href: 'providers/bot-protection/' },
+  { name: 'Device signatures', href: 'providers/device-signatures/' },
+  { name: 'Custom AuthMethod trait', href: 'concepts/architecture/' },
+];
+
+const roles = [
+  { name: 'authkestra-mcp', body: 'Guard MCP tools for AI agents', href: 'guides/ai-agents/' },
+  { name: 'authkestra-op', body: 'Run an OpenID Provider in-process', href: 'advanced/op-server/' },
+  { name: 'authkestra-resource', body: 'Verify DPoP and mTLS-bound tokens', href: 'advanced/resource-server/' },
+  { name: 'authkestra-policy', body: 'Cedar access policies in microseconds', href: 'advanced/policy-engine/' },
+  { name: 'authkestra-ssf', body: 'Revoke sessions in real time', href: 'advanced/continuous-access-evaluation/' },
+  { name: 'authkestra-session', body: 'Token rotation on Postgres, MySQL, SQLite, Redis', href: 'storage/overview/' },
+];
+
+const docs = 'https://docs.authkestra.com/';
+---
+<section id="capabilities" class="caps" aria-labelledby="caps-heading">
+  <h2 id="caps-heading">What’s in the box</h2>
+  <p class="lead">One engine, built from modules you can mix.</p>
+
+  <div class="cols">
+    <div>
+      <h3>Sign-in methods</h3>
+      <ul class="methods">
+        {methods.map((m) => (
+          <li><a href={docs + m.href} target="_blank" rel="noopener noreferrer">{m.name}</a></li>
+        ))}
+      </ul>
+    </div>
+
+    <div>
+      <h3>Server roles</h3>
+      <ul class="roles">
+        {roles.map((r) => (
+          <li>
+            <a href={docs + r.href} target="_blank" rel="noopener noreferrer">
+              <code>{r.name}</code>
+              <span>{r.body}</span>
+            </a>
+          </li>
+        ))}
+      </ul>
+    </div>
+  </div>
+
+  <div id="security-posture" class="posture" aria-label="Security posture and fit">
+    <div>
+      <h3>Where it stands</h3>
+      <p>
+        Version 0.13, so APIs can still change before 1.0. Built on audited crates such as ring,
+        webauthn-rs and cedar-policy. A third-party audit is planned before 1.0.{' '}
+        <a href="https://github.com/Authkestra/authkestra/blob/main/SECURITY.md" target="_blank" rel="noopener noreferrer">Security policy</a>
+      </p>
+    </div>
+    <div>
+      <h3>Is it for you?</h3>
+      <p>
+        Pick it for Rust APIs, web apps and MCP servers that want auth in-process. Pick Keycloak,
+        Zitadel or Ory if you need an admin console, SAML, or workforce SSO. You can also connect
+        them over OIDC.
+      </p>
+    </div>
+  </div>
+</section>
+
+<style>
+  .caps {
+    max-width: var(--ak-layout-max);
+    margin: 0 auto;
+    padding: var(--ak-space-24) var(--ak-space-6);
+  }
+
+  h2 {
+    font-size: var(--ak-text-3xl);
+    letter-spacing: var(--ak-tracking-tight);
+  }
+
+  .lead {
+    margin-top: var(--ak-space-4);
+    font-size: var(--ak-text-lg);
+    color: hsl(var(--ak-neutral-300));
+  }
+
+  .cols {
+    margin-top: var(--ak-space-12);
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);
+    gap: var(--ak-space-12);
+  }
+
+  h3 {
+    font-size: var(--ak-text-base);
+    padding-bottom: var(--ak-space-3);
+    border-bottom: 1px solid hsl(var(--border));
+  }
+
+  .methods {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: var(--ak-space-6);
+  }
+
+  .methods li a,
+  .roles li a {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--ak-space-4);
+    padding: var(--ak-space-3) 0;
+    border-bottom: 1px solid hsl(var(--border) / 0.6);
+    color: hsl(var(--foreground));
+    font-size: var(--ak-text-sm);
+    transition: color var(--ak-duration-fast) var(--ak-ease-out);
+  }
+
+  .methods li a:hover,
+  .roles li a:hover {
+    color: hsl(var(--primary-accent));
+  }
+
+  .roles code {
+    font-size: var(--ak-text-sm);
+    color: hsl(var(--primary-accent));
+    white-space: nowrap;
+  }
+
+  .roles span {
+    color: hsl(var(--muted-foreground));
+    text-align: right;
+  }
+
+  .posture {
+    margin-top: var(--ak-space-16);
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--ak-space-12);
+  }
+
+  .posture p {
+    margin-top: var(--ak-space-3);
+    max-width: 52ch;
+    font-size: var(--ak-text-sm);
+    line-height: var(--ak-leading-relaxed);
+    color: hsl(var(--ak-neutral-300));
+  }
+
+  .posture a {
+    color: hsl(var(--primary-accent));
+  }
+
+  .posture a:hover {
+    text-decoration: underline;
+  }
+
+  @media (max-width: 860px) {
+    .cols,
+    .posture {
+      grid-template-columns: 1fr;
+      gap: var(--ak-space-10);
+    }
+  }
+
+  @media (max-width: 640px) {
+    .caps {
+      padding: var(--ak-space-16) var(--ak-space-4);
+    }
+    .methods {
+      grid-template-columns: 1fr;
+    }
+    .roles li a {
+      flex-direction: column;
+      gap: var(--ak-space-1);
+    }
+    .roles span {
+      text-align: left;
+    }
+  }
+</style>

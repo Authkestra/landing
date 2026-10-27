@@ -1,6 +1,5 @@
 ---
 import Icon from './Icon.astro';
-import { highlightRust } from '../lib/rust-highlight';
 
 const stages = [
   { id: 'agent-call', num: '01', label: 'AI Agent Call', sub: 'MCP JSON-RPC', icon: 'bot', cx: 115 },
@@ -9,59 +8,24 @@ const stages = [
   { id: 'vault-token', num: '04', label: 'Scoped Vault Token', sub: 'Single-Use Proof', icon: 'lock', cx: 765 },
 ];
 
-const snippets: Record<string, string> = {
-  'agent-call': `// 1. Intercept MCP JSON-RPC "tools/call" request
-let call = McpToolCall::parse(&request)?;
-let caller = CallerIdentity::from_mcp_session(&session)?;
-
-// Extract target tool name and structured JSON arguments
-let (tool_name, args) = call.into_parts();
-let tier = router.security_tier_for(&tool_name)?;
-tracing::info!(tool = %tool_name, sub = %caller.sub, "intercepted MCP call");`,
-
-  'policy-jcs': `// 2. Canonicalize arguments (RFC 8785 JCS) & evaluate Cedar policy
-let digest = authkestra_mcp::compute_args_digest(
-    &session.id,
-    &tool_name,
-    &args,
-    expires_at,
-)?;
-let decision = policy_engine.evaluate(&caller, "tools:call", &tool_name)?;
-if !decision.is_permitted() {
-    return Err(McpError::Forbidden(decision.reason()));
-}`,
-
-  'passkey-pulse': `// 3. Issue step-up challenge & verify FIDO2 passkey assertion
-let challenge = approval_store
-    .create_challenge(&caller, &tool_name, &digest, Duration::from_secs(300))
-    .await?;
-
-// Human approves the exact canonical digest with a passkey
-let exec_token = approval_store
-    .verify_passkey_step_up(&challenge.id, &webauthn_assertion)
-    .await?;`,
-
-  'vault-token': `// 4. Atomically consume execution proof & dispense vault token
-let verified = approval_store
-    .consume_execution_token(&exec_token, &digest)
-    .await?;
-
-let downstream_token = token_broker
-    .dispense_scoped(&verified.caller, &["payments:transfer"], Duration::from_secs(60))
-    .await?;
-let result = tool_handler.execute(&args, &downstream_token).await?;`,
+const details: Record<string, { title: string; body: string }> = {
+  'agent-call': {
+    title: 'Intercept the tool call',
+    body: 'The incoming MCP JSON-RPC request is parsed, the caller identity is bound to the session, and the tool\'s security tier is looked up before anything runs.',
+  },
+  'policy-jcs': {
+    title: 'Canonicalize and check policy',
+    body: 'Arguments are canonicalized (RFC 8785 JCS) and hashed with SHA-256, then AWS Cedar decides whether this caller may invoke this tool at all.',
+  },
+  'passkey-pulse': {
+    title: 'Human approves the exact digest',
+    body: 'A step-up challenge is issued over the argument digest. A hardware-backed WebAuthn passkey assertion from a person approves precisely those arguments.',
+  },
+  'vault-token': {
+    title: 'Run with a short-lived token',
+    body: 'The single-use approval is consumed atomically and the server dispenses a scoped, short-lived API token. The model never sees the real credential.',
+  },
 };
-
-const stageNotes: Record<string, string> = {
-  'agent-call': 'Step 1 of 4 · Parses the incoming JSON-RPC tool invocation and binds caller session context.',
-  'policy-jcs': 'Step 2 of 4 · Hashes canonicalized JSON arguments and returns Err(Forbidden) on policy denial.',
-  'passkey-pulse': 'Step 3 of 4 · Mandates a hardware-backed WebAuthn assertion over the SHA-256 argument digest.',
-  'vault-token': 'Step 4 of 4 · Atomically consumes the single-use approval and resolves a short-lived API token.',
-};
-
-const highlighted = Object.fromEntries(
-  Object.entries(snippets).map(([id, code]) => [id, highlightRust(code)]),
-);
 ---
 <section id="flow" class="flow" aria-labelledby="flow-heading">
   <div class="copy">
@@ -152,40 +116,21 @@ const highlighted = Object.fromEntries(
       </ul>
     </div>
 
-    <div class="code-panel">
-      <div class="code-chrome" aria-hidden="true">
-        <span class="win red"></span>
-        <span class="win yellow"></span>
-        <span class="win green"></span>
-        <span class="code-title">mcp_execution_ceremony.rs</span>
-        <span class="code-badge">Result&lt;ToolOutput, McpError&gt;</span>
-      </div>
-      <div class="code-stack">
-        {stages.map((s, idx) => (
-          <pre
-            class:list={['code', { off: idx !== 0 }]}
-            data-snippet={s.id}
-            aria-hidden={idx !== 0 ? 'true' : undefined}
-          ><code>{highlighted[s.id].map((line) => (
-            <span class="code-line" set:html={line || '&nbsp;'} />
-          ))}</code></pre>
-        ))}
-      </div>
-      <div class="code-footer">
-        {stages.map((s, idx) => (
-          <p class:list={['stage-note', { off: idx !== 0 }]} data-note={s.id}>
-            {stageNotes[s.id]}
-          </p>
-        ))}
-      </div>
+    <div class="detail-panel" aria-live="polite">
+      {stages.map((s, idx) => (
+        <div class:list={['detail', { off: idx !== 0 }]} data-detail={s.id}>
+          <span class="detail-step">Step {idx + 1} of {stages.length}</span>
+          <h3>{details[s.id].title}</h3>
+          <p>{details[s.id].body}</p>
+        </div>
+      ))}
     </div>
   </div>
 </section>
 
 <script>
   const svg = document.querySelector<SVGSVGElement>('#flow .diagram');
-  const snippetEls = document.querySelectorAll<HTMLElement>('#flow .code[data-snippet]');
-  const noteEls = document.querySelectorAll<HTMLElement>('#flow .stage-note[data-note]');
+  const detailEls = document.querySelectorAll<HTMLElement>('#flow .detail[data-detail]');
   const legendItems = document.querySelectorAll<HTMLElement>('#flow .legend li');
   const stageNodes = document.querySelectorAll<SVGGElement>('#flow .stage-node');
 
@@ -196,14 +141,8 @@ const highlighted = Object.fromEntries(
 
     const setActive = (stageId: string) => {
       svg.setAttribute('data-active-stage', stageId);
-      snippetEls.forEach((el) => {
-        const off = el.dataset.snippet !== stageId;
-        el.classList.toggle('off', off);
-        if (off) el.setAttribute('aria-hidden', 'true');
-        else el.removeAttribute('aria-hidden');
-      });
-      noteEls.forEach((el) => {
-        el.classList.toggle('off', el.dataset.note !== stageId);
+      detailEls.forEach((el) => {
+        el.classList.toggle('off', el.dataset.detail !== stageId);
       });
       legendItems.forEach((l) => l.classList.toggle('active', l.dataset.stage === stageId));
       stageNodes.forEach((node) => node.classList.toggle('active', node.dataset.stage === stageId));
@@ -279,7 +218,7 @@ const highlighted = Object.fromEntries(
   }
 
   .visual,
-  .code-panel {
+  .detail-panel {
     min-width: 0;
     display: flex;
     flex-direction: column;
@@ -557,100 +496,41 @@ const highlighted = Object.fromEntries(
     color: hsl(var(--muted-foreground));
   }
 
-  /* Code Panel */
-  .code-panel {
+  /* Step detail panel */
+  .detail-panel {
+    display: grid;
+    align-content: center;
+    padding: var(--ak-space-8);
     background: hsl(var(--card));
     border: 1px solid hsl(var(--border));
     border-radius: var(--ak-radius-xl);
-    overflow: hidden;
   }
 
-  .code-chrome {
-    display: flex;
-    align-items: center;
-    gap: var(--ak-space-2);
-    padding: var(--ak-space-3) var(--ak-space-4);
-    border-bottom: 1px solid hsl(var(--border));
-    background: hsl(var(--ak-neutral-900));
-  }
-
-  .win {
-    width: 9px;
-    height: 9px;
-    border-radius: var(--ak-radius-full);
-  }
-
-  .win.red { background: hsl(var(--destructive)); }
-  .win.yellow { background: hsl(var(--warning)); }
-  .win.green { background: hsl(var(--success)); }
-
-  .code-title {
-    margin-left: var(--ak-space-2);
-    font-size: var(--ak-text-xs);
-    font-family: var(--ak-font-mono);
-    color: hsl(var(--ak-neutral-300));
-  }
-
-  .code-badge {
-    margin-left: auto;
-    font-size: var(--ak-text-xs);
-    font-family: var(--ak-font-mono);
-    color: hsl(var(--muted-foreground));
-  }
-
-  .code-stack {
-    display: grid;
-    flex: 1;
-    align-items: center;
-  }
-
-  .code-stack > .code {
+  .detail {
     grid-area: 1 / 1;
   }
 
-  .code {
-    margin: 0;
-    padding: var(--ak-space-5);
-    font-family: var(--ak-font-mono);
-    font-size: var(--ak-text-sm);
-    line-height: 1.65;
-    overflow-x: auto;
-  }
-
-  .code.off {
+  .detail.off {
     visibility: hidden;
   }
 
-  .code-line {
-    display: block;
-    color: hsl(var(--code-plain));
-    white-space: pre;
-  }
-
-  .code-line :global(.t-keyword) { color: hsl(var(--code-keyword)); }
-  .code-line :global(.t-type) { color: hsl(var(--code-type)); }
-  .code-line :global(.t-literal) { color: hsl(var(--code-literal)); }
-  .code-line :global(.t-macro) { color: hsl(var(--code-keyword)); }
-  .code-line :global(.t-comment) { color: hsl(var(--code-comment)); font-style: italic; }
-  .code-line :global(.t-fn) { color: hsl(var(--code-fn)); }
-
-  .code-footer {
-    display: grid;
-    padding: var(--ak-space-3) var(--ak-space-5);
-    background: hsl(var(--ak-neutral-900));
-    border-top: 1px solid hsl(var(--border));
-  }
-
-  .stage-note {
-    grid-area: 1 / 1;
+  .detail-step {
     font-size: var(--ak-text-xs);
     font-family: var(--ak-font-mono);
-    color: hsl(var(--ak-neutral-300));
-    margin: 0;
+    color: hsl(var(--primary-accent));
+    text-transform: uppercase;
+    letter-spacing: var(--ak-tracking-wide);
   }
 
-  .stage-note.off {
-    visibility: hidden;
+  .detail h3 {
+    margin-top: var(--ak-space-3);
+    font-size: var(--ak-text-xl);
+  }
+
+  .detail p {
+    margin-top: var(--ak-space-3);
+    color: hsl(var(--ak-neutral-300));
+    line-height: var(--ak-leading-relaxed);
   }
 
   @media (prefers-reduced-motion: reduce) {
@@ -681,12 +561,23 @@ const highlighted = Object.fromEntries(
     .flow {
       padding: 0 var(--ak-space-4) var(--ak-space-16);
     }
+    .copy h2 {
+      font-size: var(--ak-text-2xl);
+    }
+    .copy p {
+      font-size: var(--ak-text-base);
+    }
     .visual { padding: var(--ak-space-4); }
+    /* The 880px-wide SVG is unreadable on phones; the step selector replaces it. */
+    .diagram-frame {
+      display: none;
+    }
     .legend {
+      margin-top: 0;
       grid-template-columns: 1fr;
     }
-    .code {
-      font-size: var(--ak-text-xs);
+    .detail-panel {
+      padding: var(--ak-space-5);
     }
   }
 </style>

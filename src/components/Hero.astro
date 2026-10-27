@@ -1,29 +1,12 @@
 ---
 import Icon from './Icon.astro';
-import { highlightRust } from '../lib/rust-highlight';
 
-const heroCode = `use authkestra::core::{Authkestra, ReproofRequirement};
-use authkestra::mcp::{McpRouter, McpSecurityTier};
-
-// 1. Typestate builder verifies stores & keys at compile time
-let engine = Authkestra::builder()
-    .passkeys(webauthn)
-    .policy_engine(cedar.clone())
-    .build(); // -> Engine<Ready, Verified>
-
-// 2. Guard high-stakes AI agent MCP tool calls
-let mut mcp = McpRouter::new().with_policy_engine(cedar);
-mcp.register_tool(
-    "transfer_funds",
-    McpSecurityTier::HumanApproved {
-        required_scopes: vec!["payments:write".into()],
-        reproof: ReproofRequirement::FreshPasskey,
-        approval_ttl_secs: 300,
-    },
-    transfer_handler,
-);`;
-
-const highlightedHeroCode = highlightRust(heroCode);
+const guarantees = [
+  { title: 'Stores & keys wired', note: 'Missing session store? It fails at cargo check, not in production.' },
+  { title: 'Agent tools guarded', note: 'Three MCP security tiers, up to passkey-approved execution.' },
+  { title: 'Arguments locked', note: 'Approved tool parameters cannot change before they run.' },
+  { title: 'Secrets stay server-side', note: 'API tokens never enter the model context.' },
+];
 
 const pillars = [
   {
@@ -68,9 +51,9 @@ const pillars = [
           <a href="#security-posture" class="posture-link">Pre-1.0 Security Posture →</a>
         </div>
 
-        <h1>The Compile-Time Safe Identity &amp; AI Agent Authorization Engine for Rust</h1>
+        <h1>Your security can't be hallucinated.</h1>
         <p class="lead">
-          Embed a full OpenID Provider, passkey engine, API resource server, and MCP agent tool
+          The compile-time safe identity &amp; AI agent authorization engine for Rust. Embed a full OpenID Provider, passkey engine, API resource server, and MCP agent tool
           guard directly into your Rust binary—with compile-time wiring guarantees and zero
           external sidecars.
         </p>
@@ -102,7 +85,7 @@ const pillars = [
       </div>
 
       <!-- Right Column: Product Code & Compile-Time Verification Visual -->
-      <div class="hero-showcase" aria-label="Unified Authkestra Rust API preview">
+      <div class="hero-showcase" aria-label="Authkestra guarantees">
         <div class="showcase-card">
           <div class="showcase-bar">
             <div class="showcase-dots" aria-hidden="true">
@@ -110,12 +93,20 @@ const pillars = [
               <span class="dot yellow"></span>
               <span class="dot green"></span>
             </div>
-            <span class="showcase-filename">src/main.rs</span>
+            <span class="showcase-filename">Built-in guarantees</span>
             <span class="showcase-tag">Axum · Actix-web</span>
           </div>
-          <pre class="showcase-code"><code>{highlightedHeroCode.map((line) => (
-            <span class="code-line" set:html={line || '&nbsp;'} />
-          ))}</code></pre>
+          <ul class="showcase-list">
+            {guarantees.map((g) => (
+              <li>
+                <Icon name="check" size={16} class="g-check" aria-hidden="true" />
+                <div>
+                  <strong>{g.title}</strong>
+                  <span>{g.note}</span>
+                </div>
+              </li>
+            ))}
+          </ul>
           <div class="showcase-status">
             <div class="status-ok">
               <span class="status-dot" aria-hidden="true"></span>
@@ -438,28 +429,42 @@ const pillars = [
     border-radius: var(--ak-radius-sm);
   }
 
-  .showcase-code {
-    margin: 0;
-    padding: var(--ak-space-4) var(--ak-space-5);
-    font-family: var(--ak-font-mono);
-    font-size: var(--ak-text-xs);
-    line-height: 1.6;
-    overflow-x: auto;
-    white-space: pre;
-    background: hsl(var(--card));
+  .showcase-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ak-space-4);
+    padding: var(--ak-space-5);
   }
 
-  .code-line {
-    display: block;
-    color: hsl(var(--code-plain));
+  .showcase-list li {
+    display: flex;
+    gap: var(--ak-space-3);
+    align-items: flex-start;
   }
 
-  .code-line :global(.t-keyword) { color: hsl(var(--code-keyword)); }
-  .code-line :global(.t-type) { color: hsl(var(--code-type)); }
-  .code-line :global(.t-literal) { color: hsl(var(--code-literal)); }
-  .code-line :global(.t-macro) { color: hsl(var(--code-keyword)); }
-  .code-line :global(.t-comment) { color: hsl(var(--code-comment)); font-style: italic; }
-  .code-line :global(.t-fn) { color: hsl(var(--code-fn)); }
+  .showcase-list li div {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+
+  .showcase-list strong {
+    color: hsl(var(--foreground));
+    font-size: var(--ak-text-sm);
+    font-weight: 600;
+  }
+
+  .showcase-list span {
+    color: hsl(var(--ak-neutral-300));
+    font-size: var(--ak-text-sm);
+    line-height: var(--ak-leading-normal);
+  }
+
+  .showcase-list :global(.g-check) {
+    flex-shrink: 0;
+    margin-top: 3px;
+    color: hsl(var(--success-foreground));
+  }
 
   .showcase-status {
     display: flex;
@@ -583,6 +588,21 @@ const pillars = [
   }
 
   @media (max-width: 640px) {
+    h1 {
+      font-size: var(--ak-text-2xl);
+    }
+    .lead {
+      font-size: var(--ak-text-base);
+    }
+    .ctas .btn {
+      flex: 1 1 100%;
+    }
+    .terminal-box {
+      max-width: none;
+    }
+    .showcase-tag {
+      display: none;
+    }
     .hero {
       padding: var(--ak-space-12) var(--ak-space-4) var(--ak-space-8);
     }

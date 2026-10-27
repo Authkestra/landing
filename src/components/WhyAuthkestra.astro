@@ -1,37 +1,36 @@
 ---
 import Icon from './Icon.astro';
-import SpaceBanner from './SpaceBanner.astro';
 
 const cards = [
   {
     icon: 'bot',
     title: 'AI Agent & MCP Tool Authorization',
-    body: '3-tier MCP tool security with argument binding and passkey approval.',
+    body: 'Native 3-tier security for Model Context Protocol tools, complete with RFC 8785 JCS parameter binding, Passkey step-up approvals, and a server-side token vault.',
   },
   {
     icon: 'shield',
     title: 'Typestate Compile-Time Safety',
-    body: 'Missing stores become compile errors, not production panics.',
+    body: 'The typestate builder pattern turns missing stores or unconfigured validators into compile-time errors rather than runtime panics when requests hit production.',
   },
   {
     icon: 'feather',
     title: 'Stateless OAuth & Zero DB Dependency',
-    body: 'OAuth state lives in encrypted cookies. No session database.',
+    body: 'OAuth state and PKCE verifiers live in AES-256-GCM encrypted cookies—allowing horizontal scaling across instances without a shared Redis or SQL session store.',
   },
   {
     icon: 'server',
     title: 'Tri-Role OAuth 2.1 Engine',
-    body: 'OpenID Provider, Client, and Resource Server from one crate.',
+    body: 'Run an OpenID Provider (OP), Client (RP), and Resource Server (RS) from a single crate. Protect APIs with DPoP and mTLS proof-of-possession token binding.',
   },
   {
     icon: 'route',
     title: 'Fine-Grained Cedar Policy & CAEP',
-    body: 'Cedar policy in microseconds, with real-time session revocation.',
+    body: 'Evaluate declarative AWS Cedar authorization policies in microseconds, and ingest OpenID Shared Signals and Events (CAEP/SSF) to revoke sessions in real time.',
   },
   {
     icon: 'puzzle',
     title: 'Framework & Database Agnostic',
-    body: 'Pure Rust core. Bring your own framework and database.',
+    body: 'The core engine is pure Rust logic. Axum and Actix-web are lightweight isolated adapters, and persistence is a trait you implement—no rigid schema forced on your database.',
   },
 ];
 ---
@@ -39,10 +38,9 @@ const cards = [
   <div class="inner">
     <h2 id="why-heading">Why Authkestra</h2>
     <p class="lead">
-      Cryptographic rigor and compile-time guarantees, with zero sidecars.
+      Built for Rust teams who want cryptographic rigor, compile-time wiring guarantees,
+      and zero operational sidecars across backend APIs and AI agent servers.
     </p>
-    <SpaceBanner src="/space/why-eclipse.webp" />
-
     <div class="grid">
       {cards.map((c) => (
         <div class="card">
@@ -64,10 +62,20 @@ const cards = [
         </div>
         <h3>Maturity, Cryptographic Stack &amp; Audit Status</h3>
         <ul class="posture-list">
-          <li><strong>Version:</strong> 0.13.x, MSRV 1.85. APIs may change before 1.0.</li>
-          <li><strong>Primitives:</strong> ring, aws-lc-rs, webauthn-rs, cedar-policy.</li>
           <li>
-            <strong>Audit:</strong> third-party audit planned before 1.0.
+            <strong>Version &amp; MSRV:</strong> Active <code>0.13.x</code> release series
+            (<code>Rust 2021</code>, MSRV <code>1.85</code>). Minor <code>0.x</code> updates may
+            introduce documented API refinements prior to <code>1.0</code> stabilization.
+          </li>
+          <li>
+            <strong>Audited Upstream Primitives:</strong> Built on battle-tested crates including
+            <code>ring</code> / <code>aws-lc-rs</code>, <code>webauthn-rs</code>,
+            <code>cedar-policy</code>, <code>argon2</code>, and <code>aes-gcm</code>.
+          </li>
+          <li>
+            <strong>Verification &amp; Disclosure:</strong> Every commit runs adversarial AEAD/JCS
+            tamper suites and <code>cargo-deny</code> supply-chain checks. A formal third-party
+            audit is planned before <code>1.0</code>. See our
             <a href="https://github.com/Authkestra/authkestra/blob/main/SECURITY.md" target="_blank" rel="noopener noreferrer">Security Policy →</a>
           </li>
         </ul>
@@ -80,9 +88,22 @@ const cards = [
         </div>
         <h3>When to Use (and Not Use) Authkestra</h3>
         <ul class="posture-list">
-          <li><strong>Use it for:</strong> Rust APIs, web apps, and MCP servers needing in-process auth.</li>
-          <li><strong>Skip it for:</strong> admin consoles, SAML federation, or polyglot workforce SSO.</li>
-          <li><strong>Hybrid:</strong> keep Keycloak, Zitadel, or Ory upstream and connect via OIDC.</li>
+          <li>
+            <strong>Use Authkestra when:</strong> You are building Rust APIs, web apps, or MCP
+            servers that need in-process OAuth 2.1, Passkeys, Cedar policy, and step-up agent
+            authorization without deploying a separate JVM or Go cluster.
+          </li>
+          <li>
+            <strong>When not to use Authkestra:</strong> If you need a turnkey admin console for
+            non-technical operators, legacy SAML 2.0 XML federation, or a polyglot workforce SSO
+            portal across dozens of non-Rust apps.
+          </li>
+          <li>
+            <strong>Hybrid Option:</strong> Keep <strong>Keycloak</strong>, <strong>Zitadel</strong>,
+            or <strong>Ory</strong> as your upstream workforce IdP and connect Authkestra to it via
+            <code>authkestra-oidc</code> discovery while using <code>authkestra-mcp</code> for Rust
+            tool guards.
+          </li>
         </ul>
       </div>
     </div>

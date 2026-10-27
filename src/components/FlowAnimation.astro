@@ -1,6 +1,5 @@
 ---
 import Icon from './Icon.astro';
-import SpaceBanner from './SpaceBanner.astro';
 
 const stages = [
   { id: 'agent-call', num: '01', label: 'AI Agent Call', sub: 'MCP JSON-RPC', icon: 'bot', cx: 115 },
@@ -12,19 +11,19 @@ const stages = [
 const details: Record<string, { title: string; body: string }> = {
   'agent-call': {
     title: 'Intercept the tool call',
-    body: 'The request is parsed and the caller identity is bound to it.',
+    body: 'The incoming MCP JSON-RPC request is parsed, the caller identity is bound to the session, and the tool\'s security tier is looked up before anything runs.',
   },
   'policy-jcs': {
     title: 'Canonicalize and check policy',
-    body: 'Arguments are hashed (RFC 8785) and Cedar policy decides.',
+    body: 'Arguments are canonicalized (RFC 8785 JCS) and hashed with SHA-256, then AWS Cedar decides whether this caller may invoke this tool at all.',
   },
   'passkey-pulse': {
     title: 'Human approves the exact digest',
-    body: 'A person approves exactly those arguments with a passkey.',
+    body: 'A step-up challenge is issued over the argument digest. A hardware-backed WebAuthn passkey assertion from a person approves precisely those arguments.',
   },
   'vault-token': {
     title: 'Run with a short-lived token',
-    body: 'The server issues a short-lived token. The model never sees it.',
+    body: 'The single-use approval is consumed atomically and the server dispenses a scoped, short-lived API token. The model never sees the real credential.',
   },
 };
 ---
@@ -32,11 +31,11 @@ const details: Record<string, { title: string; body: string }> = {
   <div class="copy">
     <h2 id="flow-heading">Cryptographic AI Agent &amp; MCP Tool Execution Flow</h2>
     <p>
-      Follow a high-stakes tool call from request to execution.
+      Follow a high-stakes MCP tool invocation from request interception to execution. Authkestra
+      hashes canonical arguments with RFC 8785 JCS, evaluates AWS Cedar policy, verifies a human
+      passkey step-up, and dispenses a short-lived downstream token.
     </p>
   </div>
-
-  <SpaceBanner src="/space/flow-comet.webp" />
 
   <div class="stage">
     <div class="visual">

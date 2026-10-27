@@ -1,12 +1,11 @@
 ---
 import Icon from './Icon.astro';
-import SpaceBanner from './SpaceBanner.astro';
 
 const guarantees = [
-  { title: 'Stores & keys wired at compile time', note: '' },
-  { title: 'Agent tools guarded', note: '' },
-  { title: 'Arguments locked', note: '' },
-  { title: 'Secrets stay server-side', note: '' },
+  { title: 'Stores & keys wired', note: 'Missing session store? It fails at cargo check, not in production.' },
+  { title: 'Agent tools guarded', note: 'Three MCP security tiers, up to passkey-approved execution.' },
+  { title: 'Arguments locked', note: 'Approved tool parameters cannot change before they run.' },
+  { title: 'Secrets stay server-side', note: 'API tokens never enter the model context.' },
 ];
 
 const pillars = [
@@ -14,18 +13,24 @@ const pillars = [
     icon: 'bot',
     tag: 'authkestra-mcp',
     label: 'AI Agent & MCP Tool Guard',
+    desc: 'Intercept MCP tool calls across three security tiers, lock approved arguments against tampering, and keep API secrets inside an encrypted server vault.',
+    specs: 'Parameter Binding · Passkey Step-Up · Encrypted Vault',
     tooltip: 'Implements RFC 8785 JCS SHA-256 parameter digests, RFC 9728 resource discovery, and AES-256-GCM envelope encryption',
   },
   {
     icon: 'fingerprint',
     tag: 'authkestra-op · passkeys',
     label: 'Embedded Identity & Passkey Engine',
+    desc: 'Run a full OpenID Connect provider, stateless OAuth 2.1 login, FIDO2 passkeys, TOTP, and magic links in-process without a dedicated sidecar cluster.',
+    specs: 'OAuth 2.1 & OIDC · WebAuthn L3 · Re-Proof Gating',
     tooltip: 'Supports RFC 6749, RFC 8693 Token Exchange, RFC 8628 Device Flow, and FIDO2 passkey re-proof enrolment gating',
   },
   {
     icon: 'shield-check',
     tag: 'authkestra-resource · policy',
     label: 'API Resource Server & Cedar Policy',
+    desc: 'Verify sender-bound tokens at the API edge, evaluate declarative AWS Cedar access policies in microseconds, and revoke compromised sessions in real time.',
+    specs: 'AWS Cedar ABAC · Sender-Bound Tokens · Real-Time Revocation',
     tooltip: 'Supports RFC 9449 DPoP, RFC 8705 mTLS certificate binding, and OpenID CAEP / SSF (RFC 8935) event streams',
   },
 ];
@@ -48,7 +53,9 @@ const pillars = [
 
         <h1>Your security can't be hallucinated.</h1>
         <p class="lead">
-          The compile-time safe identity &amp; AI agent authorization engine for Rust, embedded in your binary.
+          The compile-time safe identity &amp; AI agent authorization engine for Rust. Embed a full OpenID Provider, passkey engine, API resource server, and MCP agent tool
+          guard directly into your Rust binary—with compile-time wiring guarantees and zero
+          external sidecars.
         </p>
 
         <div class="ctas">
@@ -95,6 +102,7 @@ const pillars = [
                 <Icon name="check" size={16} class="g-check" aria-hidden="true" />
                 <div>
                   <strong>{g.title}</strong>
+                  <span>{g.note}</span>
                 </div>
               </li>
             ))}
@@ -110,8 +118,6 @@ const pillars = [
       </div>
     </div>
 
-    <SpaceBanner src="/space/hero-nebula.webp" />
-
     <!-- 3-Pillar Overview Strip ("What is Authkestra") -->
     <div class="pillars-grid" aria-label="Core architecture pillars">
       {pillars.map((p) => (
@@ -123,6 +129,8 @@ const pillars = [
             <span class="pillar-tag">{p.tag}</span>
           </div>
           <strong class="pillar-title">{p.label}</strong>
+          <p class="pillar-desc">{p.desc}</p>
+          <span class="pillar-specs">{p.specs}</span>
         </div>
       ))}
     </div>

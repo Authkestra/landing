@@ -30,20 +30,54 @@ import Icon from './Icon.astro';
       </div>
     </div>
 
-    <figure class="tamper" aria-label="An agent changes an approved amount and the call is blocked">
-      <figcaption>transfer_funds</figcaption>
-      <div class="row ok">
-        <span class="who">You approved</span>
-        <span class="amount">$50</span>
-        <span class="verdict"><Icon name="check" size={16} aria-hidden="true" /> Matches</span>
+    <div class="demo-showcase">
+      <div class="showcase-header">
+        <div class="window-controls" aria-hidden="true">
+          <span class="dot red"></span>
+          <span class="dot yellow"></span>
+          <span class="dot green"></span>
+        </div>
+        <div class="window-title">
+          <Icon name="bot" size={13} class="window-icon" aria-hidden="true" />
+          <span>play.authkestra.com &mdash; Tier 3 MCP Policy</span>
+        </div>
+        <div class="live-badge">
+          <span class="live-dot" aria-hidden="true"></span>
+          <span>LIVE RECORDING</span>
+        </div>
       </div>
-      <div class="link" aria-hidden="true"></div>
-      <div class="row bad">
-        <span class="who">Agent sent</span>
-        <span class="amount">$5,000</span>
-        <span class="verdict"><Icon name="shield-alert" size={16} aria-hidden="true" /> Blocked</span>
+      <div class="video-container">
+        <video
+          autoplay
+          loop
+          muted
+          playsinline
+          poster="/mcp-demo-poster.png"
+          width="780"
+          height="720"
+          aria-label="Interactive demonstration of Authkestra MCP Protocol Step-Up and parameter anti-tampering enforcement"
+        >
+          <source src="/mcp-demo.webm" type="video/webm" />
+          <source src="/mcp-demo.mp4" type="video/mp4" />
+        </video>
       </div>
-    </figure>
+      <div class="showcase-footer">
+        <div class="footer-step">
+          <span class="step-num">1</span>
+          <span class="step-txt">Error -32001 Step-Up</span>
+        </div>
+        <div class="footer-arrow" aria-hidden="true">&rarr;</div>
+        <div class="footer-step">
+          <span class="step-num">2</span>
+          <span class="step-txt">Biometric Passkey</span>
+        </div>
+        <div class="footer-arrow" aria-hidden="true">&rarr;</div>
+        <div class="footer-step blocked">
+          <Icon name="shield-alert" size={13} aria-hidden="true" />
+          <span class="step-txt">Tampering Blocked</span>
+        </div>
+      </div>
+    </div>
   </div>
 </section>
 
@@ -105,7 +139,7 @@ import Icon from './Icon.astro';
   }
 
   .hero-copy,
-  .tamper {
+  .demo-showcase {
     min-width: 0;
   }
 
@@ -223,74 +257,150 @@ import Icon from './Icon.astro';
     color: hsl(var(--success-foreground));
   }
 
-  /* The one memorable thing: an approved amount vs. what the agent sent */
-  .tamper {
-    margin: 0;
-    padding: var(--ak-space-6);
+  /* Live MCP Playground Demo Showcase Frame */
+  .demo-showcase {
+    position: relative;
     background: hsl(var(--card));
     border: 1px solid hsl(var(--border));
     border-radius: var(--ak-radius-xl);
-    box-shadow: var(--ak-shadow-3);
+    box-shadow: 0 20px 45px -15px rgba(0, 0, 0, 0.7), 0 0 0 1px hsl(var(--border) / 0.5);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
   }
 
-  .tamper figcaption {
-    font-family: var(--ak-font-mono);
-    font-size: var(--ak-text-sm);
-    color: hsl(var(--muted-foreground));
-    margin-bottom: var(--ak-space-5);
-  }
-
-  .row {
-    display: grid;
-    grid-template-columns: 1fr auto auto;
+  .showcase-header {
+    display: flex;
     align-items: center;
-    gap: var(--ak-space-4);
-    padding: var(--ak-space-4) var(--ak-space-5);
-    border: 1px solid hsl(var(--border));
-    border-radius: var(--ak-radius-md);
+    justify-content: space-between;
+    gap: var(--ak-space-3);
+    padding: var(--ak-space-3) var(--ak-space-4);
     background: hsl(var(--ak-neutral-950));
+    border-bottom: 1px solid hsl(var(--border));
   }
 
-  .who {
-    font-size: var(--ak-text-sm);
-    color: hsl(var(--ak-neutral-300));
+  .window-controls {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    width: 60px;
   }
 
-  .amount {
-    font-family: var(--ak-font-mono);
-    font-size: var(--ak-text-xl);
-    font-weight: 600;
-    color: hsl(var(--foreground));
+  .window-controls .dot {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
   }
 
-  .verdict {
-    display: inline-flex;
+  .dot.red { background: #ef4444; opacity: 0.85; }
+  .dot.yellow { background: #eab308; opacity: 0.85; }
+  .dot.green { background: #22c55e; opacity: 0.85; }
+
+  .window-title {
+    display: flex;
     align-items: center;
     gap: var(--ak-space-2);
-    min-width: 96px;
-    justify-content: flex-end;
-    font-size: var(--ak-text-sm);
+    font-family: var(--ak-font-mono);
+    font-size: var(--ak-text-xs);
+    color: hsl(var(--muted-foreground));
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .window-icon {
+    color: hsl(var(--primary-accent));
+    shrink: 0;
+  }
+
+  .live-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 2px 7px;
+    border-radius: var(--ak-radius-full);
+    background: hsl(var(--success) / 0.12);
+    border: 1px solid hsl(var(--success-foreground) / 0.25);
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    color: hsl(var(--success-foreground));
+    white-space: nowrap;
+  }
+
+  .live-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: hsl(var(--success-foreground));
+    box-shadow: 0 0 6px hsl(var(--success-foreground));
+    animation: pulse-glow 2.5s infinite ease-in-out;
+  }
+
+  @keyframes pulse-glow {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.4; transform: scale(0.85); }
+  }
+
+  .video-container {
+    position: relative;
+    width: 100%;
+    background: #09090b;
+    overflow: hidden;
+    line-height: 0;
+  }
+
+  .video-container video {
+    display: block;
+    width: 100%;
+    height: auto;
+    object-fit: cover;
+  }
+
+  .showcase-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--ak-space-2);
+    padding: var(--ak-space-3) var(--ak-space-4);
+    background: hsl(var(--ak-neutral-950));
+    border-top: 1px solid hsl(var(--border));
+    font-size: var(--ak-text-xs);
+  }
+
+  .footer-step {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: hsl(var(--muted-foreground));
+    font-family: var(--ak-font-sans);
+  }
+
+  .step-num {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: hsl(var(--muted));
+    color: hsl(var(--foreground));
+    font-size: 10px;
+    font-weight: 600;
+  }
+
+  .footer-arrow {
+    color: hsl(var(--ak-neutral-400));
+    font-size: 11px;
+  }
+
+  .footer-step.blocked {
+    color: hsl(var(--destructive-muted));
     font-weight: 500;
   }
 
-  .row.ok .verdict { color: hsl(var(--success-foreground)); }
-
-  .row.bad {
-    border-color: hsl(var(--destructive) / 0.6);
-  }
-
-  .row.bad .amount {
-    text-decoration: line-through;
-    text-decoration-color: hsl(var(--destructive));
-  }
-
-  .row.bad .verdict { color: hsl(var(--destructive-muted)); }
-
-  .link {
-    width: 2px;
-    height: var(--ak-space-5);
-    margin: 0 auto;
-    background: hsl(var(--border));
+  .footer-step.blocked :global(svg) {
+    color: hsl(var(--destructive));
   }
 
   @media (max-width: 980px) {
@@ -308,14 +418,12 @@ import Icon from './Icon.astro';
     .lead { font-size: var(--ak-text-base); }
     .ctas .btn { flex: 1 1 100%; }
     .install { max-width: none; }
-    .tamper { padding: var(--ak-space-4); }
-    .row {
-      grid-template-columns: 1fr auto;
-      row-gap: var(--ak-space-1);
+    .showcase-header { padding: var(--ak-space-2) var(--ak-space-3); }
+    .showcase-footer {
+      flex-wrap: wrap;
+      gap: var(--ak-space-2);
+      padding: var(--ak-space-2) var(--ak-space-3);
     }
-    .verdict {
-      grid-column: 1 / -1;
-      justify-content: flex-start;
-    }
+    .footer-arrow { display: none; }
   }
 </style>

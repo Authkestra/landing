@@ -11,7 +11,7 @@
 [![License](https://img.shields.io/badge/license-MIT%2FApache--2.0-blue.svg)](https://github.com/Authkestra/authkestra)
 [![Skills](https://img.shields.io/badge/agent%20skills-Authkestra%2Fskills-informational)](https://github.com/Authkestra/skills)
 
-The official source code for **[authkestra.com](https://authkestra.com)** — the marketing and technical showcase for **Authkestra**, the compile-time safe identity and AI agent authorization engine for Rust.
+The official source code for **[authkestra.com](https://authkestra.com)** -  the marketing and technical showcase for **Authkestra**, the compile-time safe identity and AI agent authorization engine for Rust.
 
 Built with [Astro](https://astro.build) for zero-JS static HTML delivery, sub-second TTFB, and strict compliance with the **"Warm Obsidian & Signal Amber"** design system.
 
@@ -22,10 +22,10 @@ Built with [Astro](https://astro.build) for zero-JS static HTML delivery, sub-se
 - **High-Conversion Information Architecture**: Positions Authkestra across both backend Rust enterprise infrastructure (OAuth 2.1 Provider, Client, Resource Server, Passkeys, Cedar Policy) and AI/MCP security (`authkestra-mcp` delegated tool authorization, cryptographic HITL step-up approval, zero-trust downstream vault).
 - **Interactive 3-Tab Quickstart**: Accessible, tabbed showcase featuring Stateless OAuth2, Passkeys with Re-Proof Gating, and MCP Server Agent Guard, styled with token-driven syntax highlighting (`src/lib/rust-highlight.ts`).
 - **Comprehensive Technical SEO & Social Cards**:
-  - Full OpenGraph (`og:title`, `og:description`, `og:image`, `og:url`) and Twitter Cards (`summary_large_image`).
-  - Native 1200x630 preview card assets (`public/og-card.png`, `public/og-card.svg`).
-  - Rich JSON-LD structured data (`@graph` containing `SoftwareSourceCode`, `Organization`, `WebSite`, and `FAQPage`).
-  - Programmatic zero-dependency `dist/sitemap.xml` and crawler directives in `public/robots.txt`.
+ - Full OpenGraph (`og:title`, `og:description`, `og:image`, `og:url`) and Twitter Cards (`summary_large_image`).
+ - Native 1200x630 preview card assets (`public/og-card.png`, `public/og-card.svg`).
+ - Rich JSON-LD structured data (`@graph` containing `SoftwareSourceCode`, `Organization`, `WebSite`, and `FAQPage`).
+ - Programmatic zero-dependency `dist/sitemap.xml` and crawler directives in `public/robots.txt`.
 - **AI & LLM Discoverability**: First-class support for AI coding assistants via `https://authkestra.com/llms.txt` and `https://docs.authkestra.com/llms-full.txt`.
 - **20+ Backward-Compatible Redirects**: Retains all legacy Starlight documentation routes with `<meta http-equiv="refresh">` pointing to `https://docs.authkestra.com/`.
 

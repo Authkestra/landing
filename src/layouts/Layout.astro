@@ -10,7 +10,7 @@ interface Props {
 }
 
 const {
-  title = "Authkestra — Your security can't be hallucinated | Compile-Time Safe Identity & AI Agent Authorization for Rust",
+  title = "Authkestra - Your Authz system shouldn't be allucinated | Compile-Time Safe Identity & AI Agent Authorization for Rust",
   description = 'Compile-time safe OAuth 2.1, OIDC Provider, Passkeys, AWS Cedar policy, and production Model Context Protocol (MCP) agent security in a single embedded Rust engine.',
 } = Astro.props;
 
@@ -36,7 +36,7 @@ const faqQuestions = [
   },
   {
     q: 'When should I choose an embedded engine like Authkestra vs. Keycloak, Ory, or Zitadel?',
-    a: 'Choose Authkestra when you are building Rust services or MCP servers and want in-process OAuth 2.1, Passkeys, Cedar policy, and agent tool guards with zero network hops or extra sidecar clusters. Choose a standalone IdP (Keycloak, Zitadel, Ory) if you need a turnkey admin GUI for non-technical operators, legacy SAML 2.0 federation, or a central workforce SSO portal across many non-Rust languages—you can also connect Authkestra to them via OIDC discovery.',
+    a: 'Choose Authkestra when you are building Rust services or MCP servers and want in-process OAuth 2.1, Passkeys, Cedar policy, and agent tool guards with zero network hops or extra sidecar clusters. Choose a standalone IdP (Keycloak, Zitadel, Ory) if you need a turnkey admin GUI for non-technical operators, legacy SAML 2.0 federation, or a central workforce SSO portal across many non-Rust languages - you can also connect Authkestra to them via OIDC discovery.',
   },
   {
     q: 'How does Stateless OAuth work without storing sessions in a database?',
@@ -125,14 +125,14 @@ const structuredData = {
     <meta property="og:image" content={ogImageURL} />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
-    <meta property="og:image:alt" content="Authkestra — The Compile-Time Safe Identity & AI Agent Authorization Engine for Rust" />
+    <meta property="og:image:alt" content="Authkestra - The Compile-Time Safe Identity & AI Agent Authorization Engine for Rust" />
 
     <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content={title} />
     <meta name="twitter:description" content={description} />
     <meta name="twitter:image" content={ogImageURL} />
-    <meta name="twitter:image:alt" content="Authkestra — The Compile-Time Safe Identity & AI Agent Authorization Engine for Rust" />
+    <meta name="twitter:image:alt" content="Authkestra - The Compile-Time Safe Identity & AI Agent Authorization Engine for Rust" />
 
     <!-- JSON-LD Structured Data -->
     <script type="application/ld+json" set:html={JSON.stringify(structuredData)} />

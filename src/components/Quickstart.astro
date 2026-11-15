@@ -56,10 +56,11 @@ let (challenge, enrolment) = passkeys.start_register(
     docsText: 'Read the OAuth2 guide',
     cargo: `authkestra = { version = "0.15", features = ["axum", "memory", "github"] }`,
     rust: `use authkestra::Authkestra;
-use authkestra::axum::AxumStatelessExt;
+use authkestra::axum::{AxumState, AxumStatelessExt};
 use authkestra::core::OAuth2Flow;
 use authkestra::providers::github::GithubProvider;
 use axum::Router;
+use tower_cookies::CookieManagerLayer; // requires tower-cookies
 
 let github = GithubProvider::new(client_id, client_secret, redirect_uri);
 let engine = Authkestra::builder()
@@ -69,7 +70,8 @@ let engine = Authkestra::builder()
 
 let app = Router::new()
     .merge(engine.axum_router_stateless())
-    .with_state(engine);`,
+    .layer(CookieManagerLayer::new())
+    .with_state(AxumState::from(engine));`,
   },
 ];
 

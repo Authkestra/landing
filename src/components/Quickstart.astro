@@ -10,22 +10,22 @@ const tabs = [
     lead: 'Every MCP tool call goes through a security tier. High-stakes tools need a human passkey approval over the exact arguments.',
     docsHref: 'https://docs.authkestra.com/guides/ai-agents/',
     docsText: 'Read the AI Agent & MCP guide',
-    cargo: `authkestra = { version = "0.13", features = ["mcp", "axum", "memory"] }`,
-    rust: `use authkestra::mcp::{McpRouter, McpSecurityTier, ReproofRequirement};
-use authkestra::mcp::vault::EncryptedKvTokenVault;
+    cargo: `authkestra = { version = "0.15", features = ["mcp", "axum", "memory"] }`,
+    rust: `use authkestra::core::auth::ReproofRequirement;
+use authkestra::mcp::{McpRouter, McpSecurityTier, ToolDefinition};
 
-let mut router = McpRouter::new();
-
-// High-stakes financial execution tool requires cryptographic HITL approval
-router.register_tool(
-    "execute_transfer",
-    McpSecurityTier::HumanApproved {
-        required_scopes: vec!["payments:write".into()],
-        reproof: ReproofRequirement::FreshPasskey,
-        approval_ttl_secs: 300,
-    },
-    transfer_handler,
-);`,
+let router = McpRouter::builder(pending_store, execution_store)
+    .tool(ToolDefinition::new(
+        "execute_transfer",
+        schema,
+        McpSecurityTier::human_approved(
+            ["payments:write"],
+            ReproofRequirement::new(300).require_step_up(true),
+            300,
+        ),
+        transfer_handler,
+    ))
+    .build();`,
   },
   {
     id: 'tab-passkeys',
@@ -34,20 +34,18 @@ router.register_tool(
     lead: 'Passkeys with re-proof: adding a new authenticator means proving an existing one first, so a stolen session can’t take over the account.',
     docsHref: 'https://docs.authkestra.com/providers/passkeys/',
     docsText: 'Read the Passkeys guide',
-    cargo: `authkestra = { version = "0.13", features = ["axum", "memory", "passkeys"] }`,
-    rust: `use authkestra::core::{Authkestra, ReproofRequirement};
-use authkestra::passkeys::{WebAuthnAuthMethod, WebAuthnConfig};
+    cargo: `authkestra = { version = "0.15", features = ["axum", "memory", "webauthn"] }`,
+    rust: `use authkestra::core::auth::ReproofRequirement;
+use authkestra::webauthn::WebAuthnAuthMethod;
 
-let passkeys = WebAuthnAuthMethod::new(WebAuthnConfig::new(
-    "authkestra.com",
-    "https://authkestra.com",
-)?);
+let passkeys = WebAuthnAuthMethod::new(webauthn, credential_store);
 
 // Re-proof enrolment gating prevents session-hijack escalation
-let challenge = passkeys.start_register(
+let (challenge, enrolment) = passkeys.start_register(
     &caller_identity,
-    &ReproofRequirement::FreshPasskey,
-).await?;`,
+    &ReproofRequirement::new(300).require_step_up(true),
+    "alice",
+)?;`,
   },
   {
     id: 'tab-oauth2',
@@ -56,21 +54,22 @@ let challenge = passkeys.start_register(
     lead: 'OAuth state and PKCE live in an encrypted cookie, so there is no session database to run.',
     docsHref: 'https://docs.authkestra.com/providers/oauth2/',
     docsText: 'Read the OAuth2 guide',
-    cargo: `authkestra = { version = "0.13", features = ["axum", "memory", "github"] }`,
-    rust: `use authkestra::axum::AxumStatelessExt;
-use authkestra::core::{Authkestra, OAuth2Flow};
-use authkestra::oauth2::GithubProvider;
-use axum::{routing::get, Router};
+    cargo: `authkestra = { version = "0.15", features = ["axum", "memory", "github"] }`,
+    rust: `use authkestra::Authkestra;
+use authkestra::axum::AxumStatelessExt;
+use authkestra::core::OAuth2Flow;
+use authkestra::providers::github::GithubProvider;
+use axum::Router;
 
 let github = GithubProvider::new(client_id, client_secret, redirect_uri);
 let engine = Authkestra::builder()
     .provider(OAuth2Flow::new(github))
+    .jwt_secret(&token_secret)
     .build();
 
 let app = Router::new()
-    .route("/auth/login/github", get(authkestra_login))
-    .route("/auth/callback/github", get(authkestra_callback))
-    .with_authkestra(engine);`,
+    .merge(engine.axum_router_stateless())
+    .with_state(engine);`,
   },
 ];
 
